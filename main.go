@@ -51,6 +51,7 @@ var (
 	withWlanIF       = flag.Bool("with-wlanif", false, "retrieves wlan interface metrics")
 	withMonitor      = flag.Bool("with-monitor", false, "retrieves ethernet interface monitor info")
 	withIpsec        = flag.Bool("with-ipsec", false, "retrieves ipsec metrics")
+	withIpsecPeers   = flag.Bool("with-ipsec-peers", false, "retrieves ipsec peers metrics")
 	withOSPFNeighbor = flag.Bool("with-ospf-neighbor", false, "retrieves ospf neighbor metrics")
 
 	cfg *config.Config
@@ -240,6 +241,10 @@ func collectorOptions() []collector.Option {
 
 	if *withIpsec || cfg.Features.Ipsec {
 		opts = append(opts, collector.WithIpsec())
+	}
+
+	if *withIpsecPeers || cfg.Features.IpsecPeers {
+		opts = append(opts, collector.WithIpsecPeers())
 	}
 
 	if *withOSPFNeighbor || cfg.Features.OSPFNeighbor {

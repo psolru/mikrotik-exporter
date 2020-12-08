@@ -19,4 +19,5 @@ features:
   wlansta: true
   wlanif: true
   ipsec: true
+  ipsec-peers: true
   ospf-neighbor: true

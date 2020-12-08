@@ -175,6 +175,13 @@ func WithIpsec() Option {
 	}
 }
 
+// WithIpsecPeers enables ipsec peers metrics
+func WithIpsecPeers() Option {
+	return func(c *collector) {
+		c.collectors = append(c.collectors, newIPsecPeersCollector())
+	}
+}
+
 // WithOSPFNeighbor enables OSPF neighbor collector metrics
 func WithOSPFNeighbor() Option {
 	return func(c *collector) {
