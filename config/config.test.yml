@@ -21,3 +21,4 @@ features:
   ipsec: true
   ipsec-peers: true
   ospf-neighbor: true
+  lte: true

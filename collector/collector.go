@@ -189,6 +189,13 @@ func WithOSPFNeighbor() Option {
 	}
 }
 
+// WithLTE enables lte metrics
+func WithLTE() Option {
+	return func(c *collector) {
+		c.collectors = append(c.collectors, newLTECollector())
+	}
+}
+
 // Option applies options to collector
 type Option func(*collector)
 

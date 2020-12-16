@@ -28,6 +28,7 @@ type Config struct {
 		Ipsec        bool `yaml:"ipsec,omitempty"`
 		IpsecPeers   bool `yaml:"ipsec-peers,omitempty"`
 		OSPFNeighbor bool `yaml:"ospf-neighbor,omitempty"`
+		LTE          bool `yaml:"lte,omitempty"`
 	} `yaml:"features,omitempty"`
 }
 
