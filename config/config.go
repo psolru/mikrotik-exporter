@@ -30,6 +30,7 @@ type Config struct {
 		OSPFNeighbor bool `yaml:"ospf-neighbor,omitempty"`
 		LTE          bool `yaml:"lte,omitempty"`
 		Netwatch     bool `yaml:"netwatch,omitempty"`
+		Conntrack    bool `yaml:"conntrack,omitempty"`
 	} `yaml:"features,omitempty"`
 }
 

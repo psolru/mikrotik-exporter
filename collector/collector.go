@@ -203,6 +203,13 @@ func WithNetwatch() Option {
 	}
 }
 
+// WithConntrack enables netwatch metrics
+func WithConntrack() Option {
+	return func(c *collector) {
+		c.collectors = append(c.collectors, newConntrackCollector())
+	}
+}
+
 // Option applies options to collector
 type Option func(*collector)
 

@@ -32,6 +32,7 @@ func TestShouldParse(t *testing.T) {
 	assertFeature("OSPFNeighbor", c.Features.OSPFNeighbor, t)
 	assertFeature("LTE", c.Features.LTE, t)
 	assertFeature("Netwatch", c.Features.Netwatch, t)
+	assertFeature("Conntrack", c.Features.Conntrack, t)
 }
 
 func loadTestFile(t *testing.T) []byte {
