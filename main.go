@@ -54,6 +54,7 @@ var (
 	withIpsecPeers   = flag.Bool("with-ipsec-peers", false, "retrieves ipsec peers metrics")
 	withOSPFNeighbor = flag.Bool("with-ospf-neighbor", false, "retrieves ospf neighbor metrics")
 	withLTE          = flag.Bool("with-lte", false, "retrieves lte metrics")
+	withNetwatch     = flag.Bool("with-netwatch", false, "retrieves netwatch metrics")
 
 	cfg *config.Config
 
@@ -254,6 +255,10 @@ func collectorOptions() []collector.Option {
 
 	if *withLTE || cfg.Features.LTE {
 		opts = append(opts, collector.WithLTE())
+	}
+
+	if *withNetwatch || cfg.Features.Netwatch {
+		opts = append(opts, collector.WithNetwatch())
 	}
 
 	if *timeout != collector.DefaultTimeout {

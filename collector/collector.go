@@ -196,6 +196,13 @@ func WithLTE() Option {
 	}
 }
 
+// WithNetwatch enables netwatch metrics
+func WithNetwatch() Option {
+	return func(c *collector) {
+		c.collectors = append(c.collectors, newNetwatchCollector())
+	}
+}
+
 // Option applies options to collector
 type Option func(*collector)
 
