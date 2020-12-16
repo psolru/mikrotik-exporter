@@ -210,6 +210,13 @@ func WithConntrack() Option {
 	}
 }
 
+// WithBridgeHost enables bridge host metrics
+func WithBridgeHost() Option {
+	return func(c *collector) {
+		c.collectors = append(c.collectors, newBridgeHostCollector())
+	}
+}
+
 // Option applies options to collector
 type Option func(*collector)
 

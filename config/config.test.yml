@@ -24,3 +24,4 @@ features:
   lte: true
   netwatch: true
   conntrack: true
+  bridge-host: true

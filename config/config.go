@@ -31,6 +31,7 @@ type Config struct {
 		LTE          bool `yaml:"lte,omitempty"`
 		Netwatch     bool `yaml:"netwatch,omitempty"`
 		Conntrack    bool `yaml:"conntrack,omitempty"`
+		BridgeHost   bool `yaml:"bridge-host,omitempty"`
 	} `yaml:"features,omitempty"`
 }
 

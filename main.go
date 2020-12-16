@@ -56,6 +56,7 @@ var (
 	withLTE          = flag.Bool("with-lte", false, "retrieves lte metrics")
 	withNetwatch     = flag.Bool("with-netwatch", false, "retrieves netwatch metrics")
 	withConntrack    = flag.Bool("with-conntrack", false, "retrieves conntrack table metrics")
+	withBridgeHost   = flag.Bool("with-bridge-host", false, "retrieves bridge host metrics")
 
 	cfg *config.Config
 
@@ -264,6 +265,10 @@ func collectorOptions() []collector.Option {
 
 	if *withConntrack || cfg.Features.Conntrack {
 		opts = append(opts, collector.WithConntrack())
+	}
+
+	if *withBridgeHost || cfg.Features.BridgeHost {
+		opts = append(opts, collector.WithBridgeHost())
 	}
 
 	if *timeout != collector.DefaultTimeout {
