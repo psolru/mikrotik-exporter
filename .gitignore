@@ -18,6 +18,7 @@
 *.iml
 .vscode
 debug
+.run/
 
 mikrotik-exporter
 test-config.yml

@@ -274,23 +274,24 @@ func (c *collector) Describe(ch chan<- *prometheus.Desc) {
 
 // Collect implements the prometheus.Collector interface.
 func (c *collector) Collect(ch chan<- prometheus.Metric) {
-	wg := sync.WaitGroup{}
-
 	var realDevices []config.Device
 
 	for _, dev := range c.devices {
-		if (config.SrvRecord{}) != dev.Srv {
+		if len(dev.Srv.Record) != 0 {
 			log.WithFields(log.Fields{
 				"SRV": dev.Srv.Record,
 			}).Info("SRV configuration detected")
+
 			conf, _ := dns.ClientConfigFromFile("/etc/resolv.conf")
 			dnsServer := net.JoinHostPort(conf.Servers[0], strconv.Itoa(dnsPort))
-			if (config.DnsServer{}) != dev.Srv.Dns {
+
+			if len(dev.Srv.Dns.Address) != 0 {
 				dnsServer = net.JoinHostPort(dev.Srv.Dns.Address, strconv.Itoa(dev.Srv.Dns.Port))
 				log.WithFields(log.Fields{
 					"DnsServer": dnsServer,
 				}).Info("Custom DNS config detected")
 			}
+
 			dnsMsg := new(dns.Msg)
 			dnsCli := new(dns.Client)
 
@@ -315,18 +316,19 @@ func (c *collector) Collect(ch chan<- prometheus.Metric) {
 					}
 
 					realDevices = append(realDevices, d)
+					continue
 				}
 			}
-		} else {
-			realDevices = append(realDevices, dev)
 		}
+
+		realDevices = append(realDevices, dev)
 	}
 
+	wg := &sync.WaitGroup{}
 	wg.Add(len(realDevices))
 	for _, dev := range realDevices {
 		go func(d config.Device) {
 			defer wg.Done()
-
 			c.collectForDevice(d, ch)
 		}(dev)
 	}
@@ -391,8 +393,8 @@ func (c *collector) connectAndCollect(d *config.Device, ch chan<- prometheus.Met
 	}
 	defer cl.Close()
 
+	ctx := &context{ch, d, cl}
 	for _, co := range c.collectors {
-		ctx := &context{ch, d, cl}
 		err = co.collect(ctx)
 		if err != nil {
 			return err
