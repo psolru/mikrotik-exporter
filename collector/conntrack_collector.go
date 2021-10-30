@@ -10,69 +10,49 @@ import (
 )
 
 type conntrackCollector struct {
-	props        []string
-	descriptions map[string]*prometheus.Desc
+	props            []string
+	totalEntriesDesc *prometheus.Desc
+	maxEntriesDesc   *prometheus.Desc
 }
 
 func newConntrackCollector() routerOSCollector {
-	c := &conntrackCollector{}
-	c.init()
-	return c
-}
-
-func (c *conntrackCollector) init() {
-	c.props = []string{"total-entries", "max-entries"}
+	const prefix = "conntrack"
 
 	labelNames := []string{"name", "address"}
-	c.descriptions = make(map[string]*prometheus.Desc)
-	for _, p := range c.props {
-		c.descriptions[p] = descriptionForPropertyName("conntrack", p, labelNames)
+	return &conntrackCollector{
+		props:            []string{"total-entries", "max-entries"},
+		totalEntriesDesc: description(prefix, "entries", "Number of tracked connections", labelNames),
+		maxEntriesDesc:   description(prefix, "max_entries", "Conntrack table capacity", labelNames),
 	}
 }
 
 func (c *conntrackCollector) describe(ch chan<- *prometheus.Desc) {
-	for _, d := range c.descriptions {
-		ch <- d
-	}
+	ch <- c.totalEntriesDesc
+	ch <- c.maxEntriesDesc
 }
 
-func (c *conntrackCollector) fetch(ctx *collectorContext) ([]*proto.Sentence, error) {
+func (c *conntrackCollector) collect(ctx *context) error {
 	reply, err := ctx.client.Run("/ip/firewall/connection/tracking/print", "=.proplist="+strings.Join(c.props, ","))
 	if err != nil {
 		log.WithFields(log.Fields{
 			"device": ctx.device.Name,
 			"error":  err,
 		}).Error("error fetching conntrack table metrics")
-		return nil, err
-	}
-
-	return reply.Re, nil
-}
-
-func (c *conntrackCollector) collect(ctx *collectorContext) error {
-	stats, err := c.fetch(ctx)
-	if err != nil {
 		return err
 	}
 
-	for _, re := range stats {
-		c.collectForStat(re, ctx)
+	for _, re := range reply.Re {
+		c.collectMetricForProperty("total-entries", c.totalEntriesDesc, re, ctx)
+		c.collectMetricForProperty("max-entries", c.maxEntriesDesc, re, ctx)
 	}
 
 	return nil
 }
 
-func (c *conntrackCollector) collectForStat(re *proto.Sentence, ctx *collectorContext) {
-	for _, p := range c.props {
-		c.collectMetricForProperty(p, re, ctx)
-	}
-}
-
-func (c *conntrackCollector) collectMetricForProperty(property string, re *proto.Sentence, ctx *collectorContext) {
+func (c *conntrackCollector) collectMetricForProperty(property string, desc *prometheus.Desc, re *proto.Sentence, ctx *context) {
 	if re.Map[property] == "" {
 		return
 	}
-	desc := c.descriptions[property]
 	v, err := strconv.ParseFloat(re.Map[property], 64)
 	if err != nil {
 		log.WithFields(log.Fields{

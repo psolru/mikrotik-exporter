@@ -29,7 +29,7 @@ func (c *dhcpCollector) describe(ch chan<- *prometheus.Desc) {
 	ch <- c.leasesActiveCountDesc
 }
 
-func (c *dhcpCollector) collect(ctx *collectorContext) error {
+func (c *dhcpCollector) collect(ctx *context) error {
 	names, err := c.fetchDHCPServerNames(ctx)
 	if err != nil {
 		return err
@@ -45,7 +45,7 @@ func (c *dhcpCollector) collect(ctx *collectorContext) error {
 	return nil
 }
 
-func (c *dhcpCollector) fetchDHCPServerNames(ctx *collectorContext) ([]string, error) {
+func (c *dhcpCollector) fetchDHCPServerNames(ctx *context) ([]string, error) {
 	reply, err := ctx.client.Run("/ip/dhcp-server/print", "=.proplist=name")
 	if err != nil {
 		log.WithFields(log.Fields{
@@ -63,7 +63,7 @@ func (c *dhcpCollector) fetchDHCPServerNames(ctx *collectorContext) ([]string, e
 	return names, nil
 }
 
-func (c *dhcpCollector) colllectForDHCPServer(ctx *collectorContext, dhcpServer string) error {
+func (c *dhcpCollector) colllectForDHCPServer(ctx *context, dhcpServer string) error {
 	reply, err := ctx.client.Run("/ip/dhcp-server/lease/print", fmt.Sprintf("?server=%s", dhcpServer), "=active=", "=count-only=")
 	if err != nil {
 		log.WithFields(log.Fields{

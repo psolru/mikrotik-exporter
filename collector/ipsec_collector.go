@@ -36,7 +36,7 @@ func (c *ipsecCollector) describe(ch chan<- *prometheus.Desc) {
 	}
 }
 
-func (c *ipsecCollector) collect(ctx *collectorContext) error {
+func (c *ipsecCollector) collect(ctx *context) error {
 	stats, err := c.fetch(ctx)
 	if err != nil {
 		return err
@@ -49,7 +49,7 @@ func (c *ipsecCollector) collect(ctx *collectorContext) error {
 	return nil
 }
 
-func (c *ipsecCollector) fetch(ctx *collectorContext) ([]*proto.Sentence, error) {
+func (c *ipsecCollector) fetch(ctx *context) ([]*proto.Sentence, error) {
 	reply, err := ctx.client.Run("/ip/ipsec/policy/print", "?disabled=false", "?dynamic=false", "=.proplist="+strings.Join(c.props, ","))
 	if err != nil {
 		log.WithFields(log.Fields{
@@ -62,7 +62,7 @@ func (c *ipsecCollector) fetch(ctx *collectorContext) ([]*proto.Sentence, error)
 	return reply.Re, nil
 }
 
-func (c *ipsecCollector) collectForStat(re *proto.Sentence, ctx *collectorContext) {
+func (c *ipsecCollector) collectForStat(re *proto.Sentence, ctx *context) {
 	srcdst := re.Map["src-address"] + "-" + re.Map["dst-address"]
 	comment := re.Map["comment"]
 
@@ -71,7 +71,7 @@ func (c *ipsecCollector) collectForStat(re *proto.Sentence, ctx *collectorContex
 	}
 }
 
-func (c *ipsecCollector) collectMetricForProperty(property, srcdst, comment string, re *proto.Sentence, ctx *collectorContext) {
+func (c *ipsecCollector) collectMetricForProperty(property, srcdst, comment string, re *proto.Sentence, ctx *context) {
 	desc := c.descriptions[property]
 	if value := re.Map[property]; value != "" {
 		var v float64

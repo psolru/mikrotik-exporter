@@ -26,6 +26,7 @@ func TestShouldParse(t *testing.T) {
 	assertFeature("Routes", c.Features.Routes, t)
 	assertFeature("Optics", c.Features.Optics, t)
 	assertFeature("WlanSTA", c.Features.WlanSTA, t)
+	assertFeature("Capsman", c.Features.Capsman, t)
 	assertFeature("WlanIF", c.Features.WlanIF, t)
 	assertFeature("Ipsec", c.Features.Ipsec, t)
 	assertFeature("IpsecPeers", c.Features.IpsecPeers, t)

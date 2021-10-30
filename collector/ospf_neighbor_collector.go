@@ -36,7 +36,7 @@ func (c *ospfNeighborCollector) describe(ch chan<- *prometheus.Desc) {
 	}
 }
 
-func (c *ospfNeighborCollector) collect(ctx *collectorContext) error {
+func (c *ospfNeighborCollector) collect(ctx *context) error {
 	stats, err := c.fetch(ctx)
 	if err != nil {
 		return err
@@ -49,7 +49,7 @@ func (c *ospfNeighborCollector) collect(ctx *collectorContext) error {
 	return nil
 }
 
-func (c *ospfNeighborCollector) fetch(ctx *collectorContext) ([]*proto.Sentence, error) {
+func (c *ospfNeighborCollector) fetch(ctx *context) ([]*proto.Sentence, error) {
 	reply, err := ctx.client.Run("/routing/ospf/neighbor/print", "=.proplist="+strings.Join(c.props, ","))
 	if err != nil {
 		log.WithFields(log.Fields{
@@ -62,7 +62,7 @@ func (c *ospfNeighborCollector) fetch(ctx *collectorContext) ([]*proto.Sentence,
 	return reply.Re, nil
 }
 
-func (c *ospfNeighborCollector) collectForStat(re *proto.Sentence, ctx *collectorContext) {
+func (c *ospfNeighborCollector) collectForStat(re *proto.Sentence, ctx *context) {
 	instance := re.Map["instance"]
 	routerID := re.Map["router-id"]
 	neighborAddress := re.Map["address"]
@@ -74,9 +74,10 @@ func (c *ospfNeighborCollector) collectForStat(re *proto.Sentence, ctx *collecto
 	}
 }
 
-func (c *ospfNeighborCollector) collectMetricForProperty(property, instance, routerID, neighborAddress, neighborInterface, state string, re *proto.Sentence, ctx *collectorContext) {
+func (c *ospfNeighborCollector) collectMetricForProperty(property, instance, routerID, neighborAddress, neighborInterface, state string, re *proto.Sentence, ctx *context) {
 	desc := c.descriptions[property]
-	v, err := c.parseValueForProperty(property, re.Map[property])
+
+	v, err := strconv.ParseFloat(re.Map[property], 64)
 	if err != nil {
 		log.WithFields(log.Fields{
 			"device":    ctx.device.Name,
@@ -89,8 +90,4 @@ func (c *ospfNeighborCollector) collectMetricForProperty(property, instance, rou
 	}
 
 	ctx.ch <- prometheus.MustNewConstMetric(desc, prometheus.GaugeValue, v, ctx.device.Name, ctx.device.Address, instance, routerID, neighborAddress, neighborInterface, state)
-}
-
-func (c *ospfNeighborCollector) parseValueForProperty(property, value string) (float64, error) {
-	return strconv.ParseFloat(value, 64)
 }

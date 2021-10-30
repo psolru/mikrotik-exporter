@@ -32,7 +32,7 @@ func (c *dhcpLeaseCollector) describe(ch chan<- *prometheus.Desc) {
 	ch <- c.descriptions
 }
 
-func (c *dhcpLeaseCollector) collect(ctx *collectorContext) error {
+func (c *dhcpLeaseCollector) collect(ctx *context) error {
 	stats, err := c.fetch(ctx)
 	if err != nil {
 		return err
@@ -45,7 +45,7 @@ func (c *dhcpLeaseCollector) collect(ctx *collectorContext) error {
 	return nil
 }
 
-func (c *dhcpLeaseCollector) fetch(ctx *collectorContext) ([]*proto.Sentence, error) {
+func (c *dhcpLeaseCollector) fetch(ctx *context) ([]*proto.Sentence, error) {
 	reply, err := ctx.client.Run("/ip/dhcp-server/lease/print", "?status=bound", "=.proplist="+strings.Join(c.props, ","))
 	if err != nil {
 		log.WithFields(log.Fields{
@@ -58,7 +58,7 @@ func (c *dhcpLeaseCollector) fetch(ctx *collectorContext) ([]*proto.Sentence, er
 	return reply.Re, nil
 }
 
-func (c *dhcpLeaseCollector) collectMetric(ctx *collectorContext, re *proto.Sentence) {
+func (c *dhcpLeaseCollector) collectMetric(ctx *context, re *proto.Sentence) {
 	v := 1.0
 
 	f, err := parseDuration(re.Map["expires-after"])

@@ -21,8 +21,7 @@ func newInterfaceCollector() routerOSCollector {
 }
 
 func (c *interfaceCollector) init() {
-	c.props = []string{"name", "type", "disabled", "comment", "slave", "actual-mtu", "running", "rx-byte", "tx-byte", "rx-packet", "tx-packet", "rx-error", "tx-error", "rx-drop", "tx-drop"}
-
+	c.props = []string{"name", "type", "disabled", "comment", "running", "slave", "actual-mtu", "rx-byte", "tx-byte", "rx-packet", "tx-packet", "rx-error", "tx-error", "rx-drop", "tx-drop", "link-downs"}
 	labelNames := []string{"name", "address", "interface", "type", "disabled", "comment", "running", "slave"}
 	c.descriptions = make(map[string]*prometheus.Desc)
 	for _, p := range c.props[5:] {
@@ -36,7 +35,7 @@ func (c *interfaceCollector) describe(ch chan<- *prometheus.Desc) {
 	}
 }
 
-func (c *interfaceCollector) collect(ctx *collectorContext) error {
+func (c *interfaceCollector) collect(ctx *context) error {
 	stats, err := c.fetch(ctx)
 	if err != nil {
 		return err
@@ -49,7 +48,7 @@ func (c *interfaceCollector) collect(ctx *collectorContext) error {
 	return nil
 }
 
-func (c *interfaceCollector) fetch(ctx *collectorContext) ([]*proto.Sentence, error) {
+func (c *interfaceCollector) fetch(ctx *context) ([]*proto.Sentence, error) {
 	reply, err := ctx.client.Run("/interface/print", "=.proplist="+strings.Join(c.props, ","))
 	if err != nil {
 		log.WithFields(log.Fields{
@@ -62,13 +61,13 @@ func (c *interfaceCollector) fetch(ctx *collectorContext) ([]*proto.Sentence, er
 	return reply.Re, nil
 }
 
-func (c *interfaceCollector) collectForStat(re *proto.Sentence, ctx *collectorContext) {
-	for _, p := range c.props[5:] {
+func (c *interfaceCollector) collectForStat(re *proto.Sentence, ctx *context) {
+	for _, p := range c.props[6:] {
 		c.collectMetricForProperty(p, re, ctx)
 	}
 }
 
-func (c *interfaceCollector) collectMetricForProperty(property string, re *proto.Sentence, ctx *collectorContext) {
+func (c *interfaceCollector) collectMetricForProperty(property string, re *proto.Sentence, ctx *context) {
 	desc := c.descriptions[property]
 	if value := re.Map[property]; value != "" {
 		var (

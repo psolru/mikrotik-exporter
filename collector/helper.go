@@ -12,16 +12,11 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-var durationRegex *regexp.Regexp
-var durationParts [5]time.Duration
-var wirelessRateRegex *regexp.Regexp
-
-func init() {
-	durationRegex = regexp.MustCompile(`(?:(\d*)w)?(?:(\d*)d)?(?:(\d*)h)?(?:(\d*)m)?(?:(\d*)s)?`)
-	durationParts = [5]time.Duration{time.Hour * 168, time.Hour * 24, time.Hour, time.Minute, time.Second}
-
+var (
+	durationRegex     = regexp.MustCompile(`(?:(\d*)w)?(?:(\d*)d)?(?:(\d*)h)?(?:(\d*)m)?(?:(\d*)s)?(?:(\d*)ms)?`)
+	durationParts     = [6]time.Duration{time.Hour * 168, time.Hour * 24, time.Hour, time.Minute, time.Second, time.Millisecond}
 	wirelessRateRegex = regexp.MustCompile(`([\d.]+)Mbps.*`)
-}
+)
 
 func metricStringCleanup(in string) string {
 	return strings.Replace(in, "-", "_", -1)
@@ -42,7 +37,7 @@ func descriptionForPropertyNameHelpText(prefix, property string, labelNames []st
 
 func description(prefix, name, helpText string, labelNames []string) *prometheus.Desc {
 	return prometheus.NewDesc(
-		prometheus.BuildFQName(namespace, prefix, name),
+		prometheus.BuildFQName(namespace, prefix, metricStringCleanup(name)),
 		helpText,
 		labelNames,
 		nil,

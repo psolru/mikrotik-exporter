@@ -27,7 +27,7 @@ func (c *firmwareCollector) describe(ch chan<- *prometheus.Desc) {
 	ch <- c.description
 }
 
-func (c *firmwareCollector) collect(ctx *collectorContext) error {
+func (c *firmwareCollector) collect(ctx *context) error {
 	reply, err := ctx.client.Run("/system/package/getall")
 	if err != nil {
 		log.WithFields(log.Fields{

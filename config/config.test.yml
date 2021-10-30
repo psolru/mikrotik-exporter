@@ -17,6 +17,7 @@ features:
   pools: true
   optics: true
   wlansta: true
+  capsman: true
   wlanif: true
   ipsec: true
   ipsec-peers: true

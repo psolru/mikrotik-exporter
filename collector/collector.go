@@ -14,12 +14,12 @@ import (
 	"sync"
 	"time"
 
-	"mikrotik-exporter/config"
-
 	"github.com/miekg/dns"
 	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
-	routeros "gopkg.in/routeros.v2"
+	"gopkg.in/routeros.v2"
+
+	"github.com/ogi4i/mikrotik-exporter/config"
 )
 
 const (
@@ -47,13 +47,26 @@ var (
 	)
 )
 
-type collector struct {
-	devices     []config.Device
-	collectors  []routerOSCollector
-	timeout     time.Duration
-	enableTLS   bool
-	insecureTLS bool
-}
+type (
+	routerOSCollector interface {
+		describe(ch chan<- *prometheus.Desc)
+		collect(ctx *context) error
+	}
+
+	context struct {
+		ch     chan<- prometheus.Metric
+		device *config.Device
+		client *routeros.Client
+	}
+
+	collector struct {
+		devices     []config.Device
+		collectors  []routerOSCollector
+		timeout     time.Duration
+		enableTLS   bool
+		insecureTLS bool
+	}
+)
 
 // WithBGP enables BGP routing metrics
 func WithBGP() Option {
@@ -139,6 +152,13 @@ func WithWlanSTA() Option {
 	}
 }
 
+// WithCapsman enables capsman metrics
+func WithCapsman() Option {
+	return func(c *collector) {
+		c.collectors = append(c.collectors, newCapsmanCollector())
+	}
+}
+
 // WithWlanIF enables wireless interface metrics
 func WithWlanIF() Option {
 	return func(c *collector) {
@@ -147,7 +167,7 @@ func WithWlanIF() Option {
 }
 
 // WithMonitor enables ethernet monitor collector metrics
-func Monitor() Option {
+func WithMonitor() Option {
 	return func(c *collector) {
 		c.collectors = append(c.collectors, newMonitorCollector())
 	}
@@ -164,7 +184,7 @@ func WithTimeout(d time.Duration) Option {
 func WithTLS(insecure bool) Option {
 	return func(c *collector) {
 		c.enableTLS = true
-		c.insecureTLS = true
+		c.insecureTLS = insecure
 	}
 }
 
@@ -254,23 +274,24 @@ func (c *collector) Describe(ch chan<- *prometheus.Desc) {
 
 // Collect implements the prometheus.Collector interface.
 func (c *collector) Collect(ch chan<- prometheus.Metric) {
-	wg := sync.WaitGroup{}
-
 	var realDevices []config.Device
 
 	for _, dev := range c.devices {
-		if (config.SrvRecord{}) != dev.Srv {
+		if len(dev.Srv.Record) != 0 {
 			log.WithFields(log.Fields{
 				"SRV": dev.Srv.Record,
 			}).Info("SRV configuration detected")
+
 			conf, _ := dns.ClientConfigFromFile("/etc/resolv.conf")
 			dnsServer := net.JoinHostPort(conf.Servers[0], strconv.Itoa(dnsPort))
-			if (config.DnsServer{}) != dev.Srv.Dns {
+
+			if len(dev.Srv.Dns.Address) != 0 {
 				dnsServer = net.JoinHostPort(dev.Srv.Dns.Address, strconv.Itoa(dev.Srv.Dns.Port))
 				log.WithFields(log.Fields{
 					"DnsServer": dnsServer,
 				}).Info("Custom DNS config detected")
 			}
+
 			dnsMsg := new(dns.Msg)
 			dnsCli := new(dns.Client)
 
@@ -284,26 +305,31 @@ func (c *collector) Collect(ch chan<- prometheus.Metric) {
 
 			for _, k := range r.Answer {
 				if s, ok := k.(*dns.SRV); ok {
-					d := config.Device{}
+					var d config.Device
 					d.Name = strings.TrimRight(s.Target, ".")
 					d.Address = strings.TrimRight(s.Target, ".")
 					d.User = dev.User
 					d.Password = dev.Password
-					c.getIdentity(&d)
+
+					if identityErr := c.getIdentity(&d); identityErr != nil {
+						continue
+					}
+
 					realDevices = append(realDevices, d)
+					continue
 				}
 			}
-		} else {
-			realDevices = append(realDevices, dev)
 		}
+
+		realDevices = append(realDevices, dev)
 	}
 
+	wg := &sync.WaitGroup{}
 	wg.Add(len(realDevices))
-
 	for _, dev := range realDevices {
 		go func(d config.Device) {
+			defer wg.Done()
 			c.collectForDevice(d, ch)
-			wg.Done()
 		}(dev)
 	}
 
@@ -320,6 +346,7 @@ func (c *collector) getIdentity(d *config.Device) error {
 		return err
 	}
 	defer cl.Close()
+
 	reply, err := cl.Run("/system/identity/print")
 	if err != nil {
 		log.WithFields(log.Fields{
@@ -328,9 +355,11 @@ func (c *collector) getIdentity(d *config.Device) error {
 		}).Error("error fetching ethernet interfaces")
 		return err
 	}
+
 	for _, id := range reply.Re {
 		d.Name = id.Map["name"]
 	}
+
 	return nil
 }
 
@@ -364,8 +393,8 @@ func (c *collector) connectAndCollect(d *config.Device, ch chan<- prometheus.Met
 	}
 	defer cl.Close()
 
+	ctx := &context{ch, d, cl}
 	for _, co := range c.collectors {
-		ctx := &collectorContext{ch, d, cl}
 		err = co.collect(ctx)
 		if err != nil {
 			return err
@@ -388,7 +417,6 @@ func (c *collector) connect(d *config.Device) (*routeros.Client, error) {
 		if err != nil {
 			return nil, err
 		}
-		//		return routeros.DialTimeout(d.Address+apiPort, d.User, d.Password, c.timeout)
 	} else {
 		tlsCfg := &tls.Config{
 			InsecureSkipVerify: c.insecureTLS,
@@ -439,11 +467,6 @@ func (c *collector) connect(d *config.Device) (*routeros.Client, error) {
 	log.WithField("device", d.Name).Debug("done wth login")
 
 	return client, nil
-
-	//tlsCfg := &tls.Config{
-	//	InsecureSkipVerify: c.insecureTLS,
-	//}
-	//	return routeros.DialTLSTimeout(d.Address+apiPortTLS, d.User, d.Password, tlsCfg, c.timeout)
 }
 
 func challengeResponse(cha []byte, password string) string {

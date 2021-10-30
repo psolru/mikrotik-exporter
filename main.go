@@ -3,20 +3,18 @@ package main
 import (
 	"bytes"
 	"flag"
-	"io/ioutil"
-	"os"
-
-	"github.com/prometheus/common/version"
-
 	"fmt"
+	"io/ioutil"
 	"net/http"
-
-	"mikrotik-exporter/collector"
-	"mikrotik-exporter/config"
+	"os"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/prometheus/common/version"
 	log "github.com/sirupsen/logrus"
+
+	"github.com/ogi4i/mikrotik-exporter/collector"
+	"github.com/ogi4i/mikrotik-exporter/config"
 )
 
 // single device can be defined via CLI flags, multiple via config file.
@@ -48,6 +46,7 @@ var (
 	withOptics       = flag.Bool("with-optics", false, "retrieves optical diagnostic metrics")
 	withW60G         = flag.Bool("with-w60g", false, "retrieves w60g interface metrics")
 	withWlanSTA      = flag.Bool("with-wlansta", false, "retrieves connected wlan station metrics")
+	withCapsman      = flag.Bool("with-capsman", false, "retrieves capsman station metrics")
 	withWlanIF       = flag.Bool("with-wlanif", false, "retrieves wlan interface metrics")
 	withMonitor      = flag.Bool("with-monitor", false, "retrieves ethernet interface monitor info")
 	withIpsec        = flag.Bool("with-ipsec", false, "retrieves ipsec metrics")
@@ -121,13 +120,20 @@ func loadConfigFromFile() (*config.Config, error) {
 }
 
 func loadConfigFromFlags() (*config.Config, error) {
+	// Attempt to read credentials from env if not already defined
+	if *user == "" {
+		*user = os.Getenv("MIKROTIK_USER")
+	}
+	if *password == "" {
+		*password = os.Getenv("MIKROTIK_PASSWORD")
+	}
 	if *device == "" || *address == "" || *user == "" || *password == "" {
 		return nil, fmt.Errorf("missing required param for single device configuration")
 	}
 
 	return &config.Config{
 		Devices: []config.Device{
-			config.Device{
+			{
 				Name:     *device,
 				Address:  *address,
 				User:     *user,
@@ -234,13 +240,16 @@ func collectorOptions() []collector.Option {
 		opts = append(opts, collector.WithWlanSTA())
 	}
 
+	if *withCapsman || cfg.Features.Capsman {
+		opts = append(opts, collector.WithCapsman())
+	}
+
 	if *withWlanIF || cfg.Features.WlanIF {
 		opts = append(opts, collector.WithWlanIF())
 	}
 
 	if *withMonitor || cfg.Features.Monitor {
-		opts = append(opts, collector.Monitor())
-
+		opts = append(opts, collector.WithMonitor())
 	}
 
 	if *withIpsec || cfg.Features.Ipsec {
