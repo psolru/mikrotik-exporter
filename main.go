@@ -48,6 +48,7 @@ var (
 	withOptics       = flag.Bool("with-optics", false, "retrieves optical diagnostic metrics")
 	withW60G         = flag.Bool("with-w60g", false, "retrieves w60g interface metrics")
 	withWlanSTA      = flag.Bool("with-wlansta", false, "retrieves connected wlan station metrics")
+	withCapsman      = flag.Bool("with-capsman", false, "retrieves capsman station metrics")
 	withWlanIF       = flag.Bool("with-wlanif", false, "retrieves wlan interface metrics")
 	withMonitor      = flag.Bool("with-monitor", false, "retrieves ethernet interface monitor info")
 	withIpsec        = flag.Bool("with-ipsec", false, "retrieves ipsec metrics")
@@ -121,6 +122,13 @@ func loadConfigFromFile() (*config.Config, error) {
 }
 
 func loadConfigFromFlags() (*config.Config, error) {
+	// Attempt to read credentials from env if not already defined
+	if *user == "" {
+		*user = os.Getenv("MIKROTIK_USER")
+	}
+	if *password == "" {
+		*password = os.Getenv("MIKROTIK_PASSWORD")
+	}
 	if *device == "" || *address == "" || *user == "" || *password == "" {
 		return nil, fmt.Errorf("missing required param for single device configuration")
 	}
@@ -232,6 +240,10 @@ func collectorOptions() []collector.Option {
 
 	if *withWlanSTA || cfg.Features.WlanSTA {
 		opts = append(opts, collector.WithWlanSTA())
+	}
+
+	if *withCapsman || cfg.Features.Capsman {
+		opts = append(opts, collector.WithCapsman())
 	}
 
 	if *withWlanIF || cfg.Features.WlanIF {

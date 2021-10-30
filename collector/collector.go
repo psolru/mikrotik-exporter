@@ -140,6 +140,13 @@ func WithWlanSTA() Option {
 }
 
 // WithWlanIF enables wireless interface metrics
+func WithCapsman() Option {
+	return func(c *collector) {
+		c.collectors = append(c.collectors, newCapsmanCollector())
+	}
+}
+
+// WithWlanIF enables wireless interface metrics
 func WithWlanIF() Option {
 	return func(c *collector) {
 		c.collectors = append(c.collectors, newWlanIFCollector())
@@ -164,7 +171,7 @@ func WithTimeout(d time.Duration) Option {
 func WithTLS(insecure bool) Option {
 	return func(c *collector) {
 		c.enableTLS = true
-		c.insecureTLS = true
+		c.insecureTLS = insecure
 	}
 }
 
@@ -207,13 +214,6 @@ func WithNetwatch() Option {
 func WithConntrack() Option {
 	return func(c *collector) {
 		c.collectors = append(c.collectors, newConntrackCollector())
-	}
-}
-
-// WithBridgeHost enables bridge host metrics
-func WithBridgeHost() Option {
-	return func(c *collector) {
-		c.collectors = append(c.collectors, newBridgeHostCollector())
 	}
 }
 
