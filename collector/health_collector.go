@@ -37,7 +37,7 @@ func (c *healthCollector) describe(ch chan<- *prometheus.Desc) {
 	}
 }
 
-func (c *healthCollector) collect(ctx *collectorContext) error {
+func (c *healthCollector) collect(ctx *context) error {
 	stats, err := c.fetch(ctx)
 	if err != nil {
 		return err
@@ -50,7 +50,7 @@ func (c *healthCollector) collect(ctx *collectorContext) error {
 	return nil
 }
 
-func (c *healthCollector) fetch(ctx *collectorContext) ([]*proto.Sentence, error) {
+func (c *healthCollector) fetch(ctx *context) ([]*proto.Sentence, error) {
 	reply, err := ctx.client.Run("/system/health/print", "=.proplist="+strings.Join(c.props, ","))
 	if err != nil {
 		log.WithFields(log.Fields{
@@ -63,13 +63,13 @@ func (c *healthCollector) fetch(ctx *collectorContext) ([]*proto.Sentence, error
 	return reply.Re, nil
 }
 
-func (c *healthCollector) collectForStat(re *proto.Sentence, ctx *collectorContext) {
+func (c *healthCollector) collectForStat(re *proto.Sentence, ctx *context) {
 	for _, p := range c.props {
 		c.collectMetricForProperty(p, re, ctx)
 	}
 }
 
-func (c *healthCollector) collectMetricForProperty(property string, re *proto.Sentence, ctx *collectorContext) {
+func (c *healthCollector) collectMetricForProperty(property string, re *proto.Sentence, ctx *context) {
 	var v float64
 	var err error
 

@@ -21,8 +21,8 @@ func newBridgeHostCollector() routerOSCollector {
 
 func (c *bridgeHostCollector) init() {
 	c.props = []string{"bridge", "mac-address", "on-interface", "vid", "dynamic", "local", "external", "age"}
-
 	labelNames := []string{"name", "address", "bridge", "mac_address", "on_interface", "vid", "dynamic", "local", "external"}
+
 	c.descriptions = make(map[string]*prometheus.Desc)
 	for _, p := range c.props[7:] {
 		c.descriptions[p] = descriptionForPropertyName("bridge_host", p, labelNames)
@@ -35,7 +35,7 @@ func (c *bridgeHostCollector) describe(ch chan<- *prometheus.Desc) {
 	}
 }
 
-func (c *bridgeHostCollector) fetch(ctx *collectorContext) ([]*proto.Sentence, error) {
+func (c *bridgeHostCollector) fetch(ctx *context) ([]*proto.Sentence, error) {
 	reply, err := ctx.client.Run("/interface/bridge/host/print", "?disabled=false", "=.proplist="+strings.Join(c.props, ","))
 	if err != nil {
 		log.WithFields(log.Fields{
@@ -48,7 +48,7 @@ func (c *bridgeHostCollector) fetch(ctx *collectorContext) ([]*proto.Sentence, e
 	return reply.Re, nil
 }
 
-func (c *bridgeHostCollector) collect(ctx *collectorContext) error {
+func (c *bridgeHostCollector) collect(ctx *context) error {
 	stats, err := c.fetch(ctx)
 	if err != nil {
 		return err
@@ -61,13 +61,13 @@ func (c *bridgeHostCollector) collect(ctx *collectorContext) error {
 	return nil
 }
 
-func (c *bridgeHostCollector) collectForStat(re *proto.Sentence, ctx *collectorContext) {
+func (c *bridgeHostCollector) collectForStat(re *proto.Sentence, ctx *context) {
 	for _, p := range c.props[7:] {
 		c.collectMetricForProperty(p, re, ctx)
 	}
 }
 
-func (c *bridgeHostCollector) collectMetricForProperty(property string, re *proto.Sentence, ctx *collectorContext) {
+func (c *bridgeHostCollector) collectMetricForProperty(property string, re *proto.Sentence, ctx *context) {
 	desc := c.descriptions[property]
 	value := re.Map[property]
 	var v float64

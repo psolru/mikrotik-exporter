@@ -21,7 +21,6 @@ func newCapsmanCollector() routerOSCollector {
 }
 
 func (c *capsmanCollector) init() {
-	//"rx-signal", "tx-signal",
 	c.props = []string{"interface", "mac-address", "ssid", "uptime", "tx-signal", "rx-signal", "packets", "bytes"}
 	labelNames := []string{"name", "address", "interface", "mac_address", "ssid"}
 	c.descriptions = make(map[string]*prometheus.Desc)
@@ -40,7 +39,7 @@ func (c *capsmanCollector) describe(ch chan<- *prometheus.Desc) {
 	}
 }
 
-func (c *capsmanCollector) collect(ctx *collectorContext) error {
+func (c *capsmanCollector) collect(ctx *context) error {
 	stats, err := c.fetch(ctx)
 	if err != nil {
 		return err
@@ -53,7 +52,7 @@ func (c *capsmanCollector) collect(ctx *collectorContext) error {
 	return nil
 }
 
-func (c *capsmanCollector) fetch(ctx *collectorContext) ([]*proto.Sentence, error) {
+func (c *capsmanCollector) fetch(ctx *context) ([]*proto.Sentence, error) {
 	reply, err := ctx.client.Run("/caps-man/registration-table/print", "=.proplist="+strings.Join(c.props, ","))
 	if err != nil {
 		log.WithFields(log.Fields{
@@ -66,7 +65,7 @@ func (c *capsmanCollector) fetch(ctx *collectorContext) ([]*proto.Sentence, erro
 	return reply.Re, nil
 }
 
-func (c *capsmanCollector) collectForStat(re *proto.Sentence, ctx *collectorContext) {
+func (c *capsmanCollector) collectForStat(re *proto.Sentence, ctx *context) {
 	iface := re.Map["interface"]
 	mac := re.Map["mac-address"]
 	ssid := re.Map["ssid"]
@@ -79,7 +78,7 @@ func (c *capsmanCollector) collectForStat(re *proto.Sentence, ctx *collectorCont
 	}
 }
 
-func (c *capsmanCollector) collectMetricForProperty(property, iface, mac, ssid string, re *proto.Sentence, ctx *collectorContext) {
+func (c *capsmanCollector) collectMetricForProperty(property, iface, mac, ssid string, re *proto.Sentence, ctx *context) {
 	if re.Map[property] == "" {
 		return
 	}
@@ -109,7 +108,7 @@ func (c *capsmanCollector) collectMetricForProperty(property, iface, mac, ssid s
 	ctx.ch <- prometheus.MustNewConstMetric(desc, prometheus.GaugeValue, v, ctx.device.Name, ctx.device.Address, iface, mac, ssid)
 }
 
-func (c *capsmanCollector) collectMetricForTXRXCounters(property, iface, mac, ssid string, re *proto.Sentence, ctx *collectorContext) {
+func (c *capsmanCollector) collectMetricForTXRXCounters(property, iface, mac, ssid string, re *proto.Sentence, ctx *context) {
 	tx, rx, err := splitStringToFloats(re.Map[property])
 	if err != nil {
 		log.WithFields(log.Fields{
@@ -120,8 +119,7 @@ func (c *capsmanCollector) collectMetricForTXRXCounters(property, iface, mac, ss
 		}).Error("error parsing capsman station metric value")
 		return
 	}
-	desc_tx := c.descriptions["tx_"+property]
-	desc_rx := c.descriptions["rx_"+property]
-	ctx.ch <- prometheus.MustNewConstMetric(desc_tx, prometheus.CounterValue, tx, ctx.device.Name, ctx.device.Address, iface, mac, ssid)
-	ctx.ch <- prometheus.MustNewConstMetric(desc_rx, prometheus.CounterValue, rx, ctx.device.Name, ctx.device.Address, iface, mac, ssid)
+
+	ctx.ch <- prometheus.MustNewConstMetric(c.descriptions["tx_"+property], prometheus.CounterValue, tx, ctx.device.Name, ctx.device.Address, iface, mac, ssid)
+	ctx.ch <- prometheus.MustNewConstMetric(c.descriptions["rx_"+property], prometheus.CounterValue, rx, ctx.device.Name, ctx.device.Address, iface, mac, ssid)
 }

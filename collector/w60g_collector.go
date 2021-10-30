@@ -31,7 +31,7 @@ func (c *w60gInterfaceCollector) describe(ch chan<- *prometheus.Desc) {
 	ch <- c.txDistanceDesc
 	ch <- c.txPacketErrorRateDesc
 }
-func (c *w60gInterfaceCollector) collect(ctx *collectorContext) error {
+func (c *w60gInterfaceCollector) collect(ctx *context) error {
 	reply, err := ctx.client.Run("/interface/w60g/print", "=.proplist=name")
 	if err != nil {
 		log.WithFields(log.Fields{
@@ -53,7 +53,7 @@ func (c *w60gInterfaceCollector) collect(ctx *collectorContext) error {
 
 	return c.collectw60gMetricsForInterfaces(ifaces, ctx)
 }
-func (c *w60gInterfaceCollector) collectw60gMetricsForInterfaces(ifaces []string, ctx *collectorContext) error {
+func (c *w60gInterfaceCollector) collectw60gMetricsForInterfaces(ifaces []string, ctx *context) error {
 	reply, err := ctx.client.Run("/interface/w60g/monitor",
 		"=numbers="+strings.Join(ifaces, ","),
 		"=once=",
@@ -77,7 +77,7 @@ func (c *w60gInterfaceCollector) collectw60gMetricsForInterfaces(ifaces []string
 	return nil
 }
 
-func (c *w60gInterfaceCollector) collectMetricsForw60gInterface(name string, se *proto.Sentence, ctx *collectorContext) {
+func (c *w60gInterfaceCollector) collectMetricsForw60gInterface(name string, se *proto.Sentence, ctx *context) {
 	for _, prop := range c.props {
 		v, ok := se.Map[prop]
 		if !ok {
@@ -116,10 +116,6 @@ func neww60gInterfaceCollector() routerOSCollector {
 		txPacketErrorRateDesc: description(prefix, "txPacketErrorRate", "TX Packet Error Rate", labelNames),
 		props:                 []string{"signal", "rssi", "tx-mcs", "frequency", "tx-phy-rate", "tx-sector", "distance", "tx-packet-error-rate"},
 	}
-}
-
-func (c *w60gInterfaceCollector) valueForKey(name, value string) (float64, error) {
-	return strconv.ParseFloat(value, 64)
 }
 
 func (c *w60gInterfaceCollector) descForKey(name string) *prometheus.Desc {

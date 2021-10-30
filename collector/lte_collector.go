@@ -36,7 +36,7 @@ func (c *lteCollector) describe(ch chan<- *prometheus.Desc) {
 	}
 }
 
-func (c *lteCollector) collect(ctx *collectorContext) error {
+func (c *lteCollector) collect(ctx *context) error {
 	names, err := c.fetchInterfaceNames(ctx)
 	if err != nil {
 		return err
@@ -52,7 +52,7 @@ func (c *lteCollector) collect(ctx *collectorContext) error {
 	return nil
 }
 
-func (c *lteCollector) fetchInterfaceNames(ctx *collectorContext) ([]string, error) {
+func (c *lteCollector) fetchInterfaceNames(ctx *context) ([]string, error) {
 	reply, err := ctx.client.Run("/interface/lte/print", "?disabled=false", "=.proplist=name")
 	if err != nil {
 		log.WithFields(log.Fields{
@@ -70,7 +70,7 @@ func (c *lteCollector) fetchInterfaceNames(ctx *collectorContext) ([]string, err
 	return names, nil
 }
 
-func (c *lteCollector) collectForInterface(iface string, ctx *collectorContext) error {
+func (c *lteCollector) collectForInterface(iface string, ctx *context) error {
 	reply, err := ctx.client.Run("/interface/lte/info", fmt.Sprintf("=number=%s", iface), "=once=", "=.proplist="+strings.Join(c.props, ","))
 	if err != nil {
 		log.WithFields(log.Fields{
@@ -90,7 +90,7 @@ func (c *lteCollector) collectForInterface(iface string, ctx *collectorContext) 
 	return nil
 }
 
-func (c *lteCollector) collectMetricForProperty(property, iface string, re *proto.Sentence, ctx *collectorContext) {
+func (c *lteCollector) collectMetricForProperty(property, iface string, re *proto.Sentence, ctx *context) {
 	desc := c.descriptions[property]
 	// get only band and its width, drop earfcn and phy-cellid info
 	primaryBand := re.Map["primary-band"]

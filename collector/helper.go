@@ -13,16 +13,10 @@ import (
 )
 
 var (
-	durationRegex *regexp.Regexp
-	durationParts [6]time.Duration
-	wirelessRateRegex *regexp.Regexp
-)
-
-func init() {
-	durationRegex = regexp.MustCompile(`(?:(\d*)w)?(?:(\d*)d)?(?:(\d*)h)?(?:(\d*)m)?(?:(\d*)s)?(?:(\d*)ms)?`)
-	durationParts = [6]time.Duration{time.Hour * 168, time.Hour * 24, time.Hour, time.Minute, time.Second, time.Millisecond}
+	durationRegex     = regexp.MustCompile(`(?:(\d*)w)?(?:(\d*)d)?(?:(\d*)h)?(?:(\d*)m)?(?:(\d*)s)?(?:(\d*)ms)?`)
+	durationParts     = [6]time.Duration{time.Hour * 168, time.Hour * 24, time.Hour, time.Minute, time.Second, time.Millisecond}
 	wirelessRateRegex = regexp.MustCompile(`([\d.]+)Mbps.*`)
-}
+)
 
 func metricStringCleanup(in string) string {
 	return strings.Replace(in, "-", "_", -1)

@@ -29,7 +29,7 @@ func (c *dhcpv6Collector) describe(ch chan<- *prometheus.Desc) {
 	ch <- c.bindingCountDesc
 }
 
-func (c *dhcpv6Collector) collect(ctx *collectorContext) error {
+func (c *dhcpv6Collector) collect(ctx *context) error {
 	names, err := c.fetchDHCPServerNames(ctx)
 	if err != nil {
 		return err
@@ -45,7 +45,7 @@ func (c *dhcpv6Collector) collect(ctx *collectorContext) error {
 	return nil
 }
 
-func (c *dhcpv6Collector) fetchDHCPServerNames(ctx *collectorContext) ([]string, error) {
+func (c *dhcpv6Collector) fetchDHCPServerNames(ctx *context) ([]string, error) {
 	reply, err := ctx.client.Run("/ipv6/dhcp-server/print", "=.proplist=name")
 	if err != nil {
 		log.WithFields(log.Fields{
@@ -63,7 +63,7 @@ func (c *dhcpv6Collector) fetchDHCPServerNames(ctx *collectorContext) ([]string,
 	return names, nil
 }
 
-func (c *dhcpv6Collector) colllectForDHCPServer(ctx *collectorContext, dhcpServer string) error {
+func (c *dhcpv6Collector) colllectForDHCPServer(ctx *context, dhcpServer string) error {
 	reply, err := ctx.client.Run("/ipv6/dhcp-server/binding/print", fmt.Sprintf("?server=%s", dhcpServer), "=count-only=")
 	if err != nil {
 		log.WithFields(log.Fields{

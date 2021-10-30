@@ -21,14 +21,13 @@ func newBGPCollector() routerOSCollector {
 }
 
 func (c *bgpCollector) init() {
-	c.props = []string{"name", "remote-as", "state", "prefix-count", "updates-sent", "updates-received", "withdrawn-sent", "withdrawn-received"}
-
 	const prefix = "bgp"
+
+	c.props = []string{"name", "remote-as", "state", "prefix-count", "updates-sent", "updates-received", "withdrawn-sent", "withdrawn-received"}
 	labelNames := []string{"name", "address", "session", "asn"}
 
 	c.descriptions = make(map[string]*prometheus.Desc)
 	c.descriptions["state"] = description(prefix, "up", "BGP session is established (up = 1)", labelNames)
-
 	for _, p := range c.props[3:] {
 		c.descriptions[p] = descriptionForPropertyName(prefix, p, labelNames)
 	}
@@ -40,7 +39,7 @@ func (c *bgpCollector) describe(ch chan<- *prometheus.Desc) {
 	}
 }
 
-func (c *bgpCollector) collect(ctx *collectorContext) error {
+func (c *bgpCollector) collect(ctx *context) error {
 	stats, err := c.fetch(ctx)
 	if err != nil {
 		return err
@@ -53,7 +52,7 @@ func (c *bgpCollector) collect(ctx *collectorContext) error {
 	return nil
 }
 
-func (c *bgpCollector) fetch(ctx *collectorContext) ([]*proto.Sentence, error) {
+func (c *bgpCollector) fetch(ctx *context) ([]*proto.Sentence, error) {
 	reply, err := ctx.client.Run("/routing/bgp/peer/print", "=.proplist="+strings.Join(c.props, ","))
 	if err != nil {
 		log.WithFields(log.Fields{
@@ -66,7 +65,7 @@ func (c *bgpCollector) fetch(ctx *collectorContext) ([]*proto.Sentence, error) {
 	return reply.Re, nil
 }
 
-func (c *bgpCollector) collectForStat(re *proto.Sentence, ctx *collectorContext) {
+func (c *bgpCollector) collectForStat(re *proto.Sentence, ctx *context) {
 	asn := re.Map["remote-as"]
 	session := re.Map["name"]
 
@@ -75,7 +74,7 @@ func (c *bgpCollector) collectForStat(re *proto.Sentence, ctx *collectorContext)
 	}
 }
 
-func (c *bgpCollector) collectMetricForProperty(property, session, asn string, re *proto.Sentence, ctx *collectorContext) {
+func (c *bgpCollector) collectMetricForProperty(property, session, asn string, re *proto.Sentence, ctx *context) {
 	desc := c.descriptions[property]
 	v, err := c.parseValueForProperty(property, re.Map[property])
 	if err != nil {

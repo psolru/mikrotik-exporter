@@ -14,12 +14,12 @@ import (
 	"sync"
 	"time"
 
-	"mikrotik-exporter/config"
-
 	"github.com/miekg/dns"
 	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
-	routeros "gopkg.in/routeros.v2"
+	"gopkg.in/routeros.v2"
+
+	"github.com/ogi4i/mikrotik-exporter/config"
 )
 
 const (
@@ -47,13 +47,26 @@ var (
 	)
 )
 
-type collector struct {
-	devices     []config.Device
-	collectors  []routerOSCollector
-	timeout     time.Duration
-	enableTLS   bool
-	insecureTLS bool
-}
+type (
+	routerOSCollector interface {
+		describe(ch chan<- *prometheus.Desc)
+		collect(ctx *context) error
+	}
+
+	context struct {
+		ch     chan<- prometheus.Metric
+		device *config.Device
+		client *routeros.Client
+	}
+
+	collector struct {
+		devices     []config.Device
+		collectors  []routerOSCollector
+		timeout     time.Duration
+		enableTLS   bool
+		insecureTLS bool
+	}
+)
 
 // WithBGP enables BGP routing metrics
 func WithBGP() Option {
@@ -139,7 +152,7 @@ func WithWlanSTA() Option {
 	}
 }
 
-// WithWlanIF enables wireless interface metrics
+// WithCapsman enables capsman metrics
 func WithCapsman() Option {
 	return func(c *collector) {
 		c.collectors = append(c.collectors, newCapsmanCollector())
@@ -154,7 +167,7 @@ func WithWlanIF() Option {
 }
 
 // WithMonitor enables ethernet monitor collector metrics
-func Monitor() Option {
+func WithMonitor() Option {
 	return func(c *collector) {
 		c.collectors = append(c.collectors, newMonitorCollector())
 	}
@@ -214,6 +227,13 @@ func WithNetwatch() Option {
 func WithConntrack() Option {
 	return func(c *collector) {
 		c.collectors = append(c.collectors, newConntrackCollector())
+	}
+}
+
+// WithBridgeHost enables bridge host metrics
+func WithBridgeHost() Option {
+	return func(c *collector) {
+		c.collectors = append(c.collectors, newBridgeHostCollector())
 	}
 }
 
@@ -284,12 +304,16 @@ func (c *collector) Collect(ch chan<- prometheus.Metric) {
 
 			for _, k := range r.Answer {
 				if s, ok := k.(*dns.SRV); ok {
-					d := config.Device{}
+					var d config.Device
 					d.Name = strings.TrimRight(s.Target, ".")
 					d.Address = strings.TrimRight(s.Target, ".")
 					d.User = dev.User
 					d.Password = dev.Password
-					c.getIdentity(&d)
+
+					if identityErr := c.getIdentity(&d); identityErr != nil {
+						continue
+					}
+
 					realDevices = append(realDevices, d)
 				}
 			}
@@ -299,11 +323,11 @@ func (c *collector) Collect(ch chan<- prometheus.Metric) {
 	}
 
 	wg.Add(len(realDevices))
-
 	for _, dev := range realDevices {
 		go func(d config.Device) {
+			defer wg.Done()
+
 			c.collectForDevice(d, ch)
-			wg.Done()
 		}(dev)
 	}
 
@@ -320,6 +344,7 @@ func (c *collector) getIdentity(d *config.Device) error {
 		return err
 	}
 	defer cl.Close()
+
 	reply, err := cl.Run("/system/identity/print")
 	if err != nil {
 		log.WithFields(log.Fields{
@@ -328,9 +353,11 @@ func (c *collector) getIdentity(d *config.Device) error {
 		}).Error("error fetching ethernet interfaces")
 		return err
 	}
+
 	for _, id := range reply.Re {
 		d.Name = id.Map["name"]
 	}
+
 	return nil
 }
 
@@ -365,7 +392,7 @@ func (c *collector) connectAndCollect(d *config.Device, ch chan<- prometheus.Met
 	defer cl.Close()
 
 	for _, co := range c.collectors {
-		ctx := &collectorContext{ch, d, cl}
+		ctx := &context{ch, d, cl}
 		err = co.collect(ctx)
 		if err != nil {
 			return err
@@ -388,7 +415,6 @@ func (c *collector) connect(d *config.Device) (*routeros.Client, error) {
 		if err != nil {
 			return nil, err
 		}
-		//		return routeros.DialTimeout(d.Address+apiPort, d.User, d.Password, c.timeout)
 	} else {
 		tlsCfg := &tls.Config{
 			InsecureSkipVerify: c.insecureTLS,
@@ -439,11 +465,6 @@ func (c *collector) connect(d *config.Device) (*routeros.Client, error) {
 	log.WithField("device", d.Name).Debug("done wth login")
 
 	return client, nil
-
-	//tlsCfg := &tls.Config{
-	//	InsecureSkipVerify: c.insecureTLS,
-	//}
-	//	return routeros.DialTLSTimeout(d.Address+apiPortTLS, d.User, d.Password, tlsCfg, c.timeout)
 }
 
 func challengeResponse(cha []byte, password string) string {

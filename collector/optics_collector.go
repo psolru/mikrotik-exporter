@@ -46,7 +46,7 @@ func (c *opticsCollector) describe(ch chan<- *prometheus.Desc) {
 	ch <- c.voltageDesc
 }
 
-func (c *opticsCollector) collect(ctx *collectorContext) error {
+func (c *opticsCollector) collect(ctx *context) error {
 	reply, err := ctx.client.Run("/interface/ethernet/print", "=.proplist=name")
 	if err != nil {
 		log.WithFields(log.Fields{
@@ -71,7 +71,7 @@ func (c *opticsCollector) collect(ctx *collectorContext) error {
 	return c.collectOpticalMetricsForInterfaces(ifaces, ctx)
 }
 
-func (c *opticsCollector) collectOpticalMetricsForInterfaces(ifaces []string, ctx *collectorContext) error {
+func (c *opticsCollector) collectOpticalMetricsForInterfaces(ifaces []string, ctx *context) error {
 	reply, err := ctx.client.Run("/interface/ethernet/monitor",
 		"=numbers="+strings.Join(ifaces, ","),
 		"=once=",
@@ -96,7 +96,7 @@ func (c *opticsCollector) collectOpticalMetricsForInterfaces(ifaces []string, ct
 	return nil
 }
 
-func (c *opticsCollector) collectMetricsForInterface(name string, se *proto.Sentence, ctx *collectorContext) {
+func (c *opticsCollector) collectMetricsForInterface(name string, se *proto.Sentence, ctx *context) {
 	for _, prop := range c.props {
 		v, ok := se.Map[prop]
 		if !ok {

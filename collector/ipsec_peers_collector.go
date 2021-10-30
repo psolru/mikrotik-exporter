@@ -36,7 +36,7 @@ func (c *ipsecPeersCollector) describe(ch chan<- *prometheus.Desc) {
 	}
 }
 
-func (c *ipsecPeersCollector) collect(ctx *collectorContext) error {
+func (c *ipsecPeersCollector) collect(ctx *context) error {
 	stats, err := c.fetch(ctx)
 	if err != nil {
 		return err
@@ -49,7 +49,7 @@ func (c *ipsecPeersCollector) collect(ctx *collectorContext) error {
 	return nil
 }
 
-func (c *ipsecPeersCollector) fetch(ctx *collectorContext) ([]*proto.Sentence, error) {
+func (c *ipsecPeersCollector) fetch(ctx *context) ([]*proto.Sentence, error) {
 	reply, err := ctx.client.Run("/ip/ipsec/active-peers/print", "=.proplist="+strings.Join(c.props, ","))
 	if err != nil {
 		log.WithFields(log.Fields{
@@ -62,13 +62,13 @@ func (c *ipsecPeersCollector) fetch(ctx *collectorContext) ([]*proto.Sentence, e
 	return reply.Re, nil
 }
 
-func (c *ipsecPeersCollector) collectMetrics(re *proto.Sentence, ctx *collectorContext) {
+func (c *ipsecPeersCollector) collectMetrics(re *proto.Sentence, ctx *context) {
 	for _, p := range c.props[4:] {
 		c.collectMetricForProperty(p, re, ctx)
 	}
 }
 
-func (c *ipsecPeersCollector) collectMetricForProperty(property string, re *proto.Sentence, ctx *collectorContext) {
+func (c *ipsecPeersCollector) collectMetricForProperty(property string, re *proto.Sentence, ctx *context) {
 	desc := c.descriptions[property]
 	if value := re.Map[property]; value != "" {
 		var v float64

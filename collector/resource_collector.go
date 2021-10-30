@@ -1,23 +1,13 @@
 package collector
 
 import (
-	"regexp"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/routeros.v2/proto"
 )
-
-var uptimeRegex *regexp.Regexp
-var uptimeParts [5]time.Duration
-
-func init() {
-	uptimeRegex = regexp.MustCompile(`(?:(\d*)w)?(?:(\d*)d)?(?:(\d*)h)?(?:(\d*)m)?(?:(\d*)s)?`)
-	uptimeParts = [5]time.Duration{time.Hour * 168, time.Hour * 24, time.Hour, time.Minute, time.Second}
-}
 
 type resourceCollector struct {
 	props        []string
@@ -46,7 +36,7 @@ func (c *resourceCollector) describe(ch chan<- *prometheus.Desc) {
 	}
 }
 
-func (c *resourceCollector) collect(ctx *collectorContext) error {
+func (c *resourceCollector) collect(ctx *context) error {
 	stats, err := c.fetch(ctx)
 	if err != nil {
 		return err
@@ -59,7 +49,7 @@ func (c *resourceCollector) collect(ctx *collectorContext) error {
 	return nil
 }
 
-func (c *resourceCollector) fetch(ctx *collectorContext) ([]*proto.Sentence, error) {
+func (c *resourceCollector) fetch(ctx *context) ([]*proto.Sentence, error) {
 	reply, err := ctx.client.Run("/system/resource/print", "=.proplist="+strings.Join(c.props, ","))
 	if err != nil {
 		log.WithFields(log.Fields{
@@ -72,13 +62,13 @@ func (c *resourceCollector) fetch(ctx *collectorContext) ([]*proto.Sentence, err
 	return reply.Re, nil
 }
 
-func (c *resourceCollector) collectForStat(re *proto.Sentence, ctx *collectorContext) {
+func (c *resourceCollector) collectForStat(re *proto.Sentence, ctx *context) {
 	for _, p := range c.props[:6] {
 		c.collectMetricForProperty(p, re, ctx)
 	}
 }
 
-func (c *resourceCollector) collectMetricForProperty(property string, re *proto.Sentence, ctx *collectorContext) {
+func (c *resourceCollector) collectMetricForProperty(property string, re *proto.Sentence, ctx *context) {
 	var v float64
 	var err error
 

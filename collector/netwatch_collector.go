@@ -35,7 +35,7 @@ func (c *netwatchCollector) describe(ch chan<- *prometheus.Desc) {
 	}
 }
 
-func (c *netwatchCollector) collect(ctx *collectorContext) error {
+func (c *netwatchCollector) collect(ctx *context) error {
 	stats, err := c.fetch(ctx)
 	if err != nil {
 		return err
@@ -48,7 +48,7 @@ func (c *netwatchCollector) collect(ctx *collectorContext) error {
 	return nil
 }
 
-func (c *netwatchCollector) fetch(ctx *collectorContext) ([]*proto.Sentence, error) {
+func (c *netwatchCollector) fetch(ctx *context) ([]*proto.Sentence, error) {
 	reply, err := ctx.client.Run("/tool/netwatch/print", "?disabled=false", "=.proplist="+strings.Join(c.props, ","))
 	if err != nil {
 		log.WithFields(log.Fields{
@@ -61,7 +61,7 @@ func (c *netwatchCollector) fetch(ctx *collectorContext) ([]*proto.Sentence, err
 	return reply.Re, nil
 }
 
-func (c *netwatchCollector) collectForStat(re *proto.Sentence, ctx *collectorContext) {
+func (c *netwatchCollector) collectForStat(re *proto.Sentence, ctx *context) {
 	host := re.Map["host"]
 	comment := re.Map["comment"]
 
@@ -70,7 +70,7 @@ func (c *netwatchCollector) collectForStat(re *proto.Sentence, ctx *collectorCon
 	}
 }
 
-func (c *netwatchCollector) collectMetricForProperty(property, host, comment string, re *proto.Sentence, ctx *collectorContext) {
+func (c *netwatchCollector) collectMetricForProperty(property, host, comment string, re *proto.Sentence, ctx *context) {
 	desc := c.descriptions[property]
 	if value := re.Map[property]; value != "" {
 		var v float64

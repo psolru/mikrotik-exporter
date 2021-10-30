@@ -36,7 +36,7 @@ func (c *wlanIFCollector) describe(ch chan<- *prometheus.Desc) {
 	}
 }
 
-func (c *wlanIFCollector) collect(ctx *collectorContext) error {
+func (c *wlanIFCollector) collect(ctx *context) error {
 	names, err := c.fetchInterfaceNames(ctx)
 	if err != nil {
 		return err
@@ -52,7 +52,7 @@ func (c *wlanIFCollector) collect(ctx *collectorContext) error {
 	return nil
 }
 
-func (c *wlanIFCollector) fetchInterfaceNames(ctx *collectorContext) ([]string, error) {
+func (c *wlanIFCollector) fetchInterfaceNames(ctx *context) ([]string, error) {
 	reply, err := ctx.client.Run("/interface/wireless/print", "?disabled=false", "=.proplist=name")
 	if err != nil {
 		log.WithFields(log.Fields{
@@ -70,7 +70,7 @@ func (c *wlanIFCollector) fetchInterfaceNames(ctx *collectorContext) ([]string, 
 	return names, nil
 }
 
-func (c *wlanIFCollector) collectForInterface(iface string, ctx *collectorContext) error {
+func (c *wlanIFCollector) collectForInterface(iface string, ctx *context) error {
 	reply, err := ctx.client.Run("/interface/wireless/monitor", fmt.Sprintf("=numbers=%s", iface), "=once=", "=.proplist="+strings.Join(c.props, ","))
 	if err != nil {
 		log.WithFields(log.Fields{
@@ -90,7 +90,7 @@ func (c *wlanIFCollector) collectForInterface(iface string, ctx *collectorContex
 	return nil
 }
 
-func (c *wlanIFCollector) collectMetricForProperty(property, iface string, re *proto.Sentence, ctx *collectorContext) {
+func (c *wlanIFCollector) collectMetricForProperty(property, iface string, re *proto.Sentence, ctx *context) {
 	desc := c.descriptions[property]
 	channel := re.Map["channel"]
 	if re.Map[property] == "" {

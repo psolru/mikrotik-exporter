@@ -35,7 +35,7 @@ func (c *monitorCollector) describe(ch chan<- *prometheus.Desc) {
 	}
 }
 
-func (c *monitorCollector) collect(ctx *collectorContext) error {
+func (c *monitorCollector) collect(ctx *context) error {
 	reply, err := ctx.client.Run("/interface/ethernet/print", "=.proplist=name")
 	if err != nil {
 		log.WithFields(log.Fields{
@@ -53,7 +53,7 @@ func (c *monitorCollector) collect(ctx *collectorContext) error {
 	return c.collectForMonitor(eths, ctx)
 }
 
-func (c *monitorCollector) collectForMonitor(eths []string, ctx *collectorContext) error {
+func (c *monitorCollector) collectForMonitor(eths []string, ctx *context) error {
 	reply, err := ctx.client.Run("/interface/ethernet/monitor",
 		"=numbers="+strings.Join(eths, ","),
 		"=once=",
@@ -74,7 +74,7 @@ func (c *monitorCollector) collectForMonitor(eths []string, ctx *collectorContex
 	return nil
 }
 
-func (c *monitorCollector) collectMetricsForEth(name string, se *proto.Sentence, ctx *collectorContext) {
+func (c *monitorCollector) collectMetricsForEth(name string, se *proto.Sentence, ctx *context) {
 	for _, prop := range c.props {
 		v, ok := se.Map[prop]
 		if !ok {

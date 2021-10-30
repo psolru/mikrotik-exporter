@@ -31,7 +31,7 @@ func (c *conntrackCollector) describe(ch chan<- *prometheus.Desc) {
 	ch <- c.maxEntriesDesc
 }
 
-func (c *conntrackCollector) collect(ctx *collectorContext) error {
+func (c *conntrackCollector) collect(ctx *context) error {
 	reply, err := ctx.client.Run("/ip/firewall/connection/tracking/print", "=.proplist="+strings.Join(c.props, ","))
 	if err != nil {
 		log.WithFields(log.Fields{
@@ -49,7 +49,7 @@ func (c *conntrackCollector) collect(ctx *collectorContext) error {
 	return nil
 }
 
-func (c *conntrackCollector) collectMetricForProperty(property string, desc *prometheus.Desc, re *proto.Sentence, ctx *collectorContext) {
+func (c *conntrackCollector) collectMetricForProperty(property string, desc *prometheus.Desc, re *proto.Sentence, ctx *context) {
 	if re.Map[property] == "" {
 		return
 	}
