@@ -137,6 +137,18 @@ func Test_routesCollector_Collect(t *testing.T) {
 						},
 					},
 				}, nil)
+				routerOSClientMock.RunMock.When([]string{
+					"/ip/route/print",
+					"?disabled=false",
+					"?rip",
+					"=count-only=",
+				}...).Then(&routeros.Reply{
+					Done: &proto.Sentence{
+						Map: map[string]string{
+							"ret": "0.0",
+						},
+					},
+				}, nil)
 
 				routerOSClientMock.RunMock.When([]string{
 					"/ipv6/route/print",
@@ -209,6 +221,18 @@ func Test_routesCollector_Collect(t *testing.T) {
 						},
 					},
 				}, nil)
+				routerOSClientMock.RunMock.When([]string{
+					"/ipv6/route/print",
+					"?disabled=false",
+					"?rip",
+					"=count-only=",
+				}...).Then(&routeros.Reply{
+					Done: &proto.Sentence{
+						Map: map[string]string{
+							"ret": "0.0",
+						},
+					},
+				}, nil)
 			},
 			want: []prometheus.Metric{
 				prometheus.MustNewConstMetric(
@@ -241,6 +265,10 @@ func Test_routesCollector_Collect(t *testing.T) {
 				),
 				prometheus.MustNewConstMetric(
 					metrics.BuildMetricDescription(prefix, "by_protocol", "number of routes per protocol in rib", append(labelNames, "protocol")),
+					prometheus.GaugeValue, 0.0, "device", "address", "4", "rip",
+				),
+				prometheus.MustNewConstMetric(
+					metrics.BuildMetricDescription(prefix, "by_protocol", "number of routes per protocol in rib", append(labelNames, "protocol")),
 					prometheus.GaugeValue, 0.0, "device", "address", "6", "bgp",
 				),
 				prometheus.MustNewConstMetric(
@@ -258,6 +286,10 @@ func Test_routesCollector_Collect(t *testing.T) {
 				prometheus.MustNewConstMetric(
 					metrics.BuildMetricDescription(prefix, "by_protocol", "number of routes per protocol in rib", append(labelNames, "protocol")),
 					prometheus.GaugeValue, 0.0, "device", "address", "6", "ospf",
+				),
+				prometheus.MustNewConstMetric(
+					metrics.BuildMetricDescription(prefix, "by_protocol", "number of routes per protocol in rib", append(labelNames, "protocol")),
+					prometheus.GaugeValue, 0.0, "device", "address", "6", "rip",
 				),
 			},
 		},
@@ -344,6 +376,18 @@ func Test_routesCollector_Collect(t *testing.T) {
 						},
 					},
 				}, nil)
+				routerOSClientMock.RunMock.When([]string{
+					"/ip/route/print",
+					"?disabled=false",
+					"?rip",
+					"=count-only=",
+				}...).Then(&routeros.Reply{
+					Done: &proto.Sentence{
+						Map: map[string]string{
+							"ret": "0,0",
+						},
+					},
+				}, nil)
 
 				routerOSClientMock.RunMock.When([]string{
 					"/ipv6/route/print",
@@ -408,6 +452,18 @@ func Test_routesCollector_Collect(t *testing.T) {
 					"/ipv6/route/print",
 					"?disabled=false",
 					"?static",
+					"=count-only=",
+				}...).Then(&routeros.Reply{
+					Done: &proto.Sentence{
+						Map: map[string]string{
+							"ret": "0,0",
+						},
+					},
+				}, nil)
+				routerOSClientMock.RunMock.When([]string{
+					"/ipv6/route/print",
+					"?disabled=false",
+					"?rip",
 					"=count-only=",
 				}...).Then(&routeros.Reply{
 					Done: &proto.Sentence{

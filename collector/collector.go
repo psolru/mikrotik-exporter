@@ -16,25 +16,25 @@ import (
 var (
 	scrapeDurationMetricDescription = prometheus.NewDesc(
 		prometheus.BuildFQName(namespace, scrapePrefix, "duration_seconds"),
-		"Duration of a scrape",
+		"Duration of a device scrape",
 		[]string{"device"},
 		nil,
 	)
 	scrapeSuccessMetricDescription = prometheus.NewDesc(
 		prometheus.BuildFQName(namespace, scrapePrefix, "success"),
-		"Whether a scrape succeeded",
+		"Whether a device scrape succeeded",
 		[]string{"device"},
 		nil,
 	)
 	collectorDurationMetricDescription = prometheus.NewDesc(
 		prometheus.BuildFQName(namespace, scrapePrefix, "collector_duration_seconds"),
-		"Duration of a collector scrape",
+		"Duration of a device collector scrape",
 		[]string{"device", "collector"},
 		nil,
 	)
 	collectorSuccessMetricDescription = prometheus.NewDesc(
 		prometheus.BuildFQName(namespace, scrapePrefix, "collector_success"),
-		"Whether a collector succeeded",
+		"Whether a device collector succeeded",
 		[]string{"device", "collector"},
 		nil,
 	)

@@ -2,7 +2,7 @@ LOCAL_BIN:=$(CURDIR)/bin
 MINIMOCK_BIN:=$(LOCAL_BIN)/minimock
 GOLANGCI_BIN:=$(LOCAL_BIN)/golangci-lint
 
-export VERSION=1.1.0
+export VERSION=1.1.1
 
 export GOSUMDB=sum.golang.org
 export GONOPROXY=
@@ -17,7 +17,7 @@ bin-deps:
 	$(info #Installing binary dependencies...)
 	tmp=$$(mktemp -d) && cd $$tmp && pwd && go mod init temp && \
 	GOBIN=$(LOCAL_BIN) go install github.com/gojuno/minimock/v3/cmd/minimock@v3.0.10 && \
-	GOBIN=$(LOCAL_BIN) go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.44.2
+	GOBIN=$(LOCAL_BIN) go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.45.2
 
 lint:
 	$(info #Running lint...)

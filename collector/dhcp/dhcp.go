@@ -79,6 +79,13 @@ func (c *dhcpLeaseCollector) collectMetric(ctx *context.Context, re *proto.Sente
 		return
 	}
 
-	ctx.MetricsChan <- prometheus.MustNewConstMetric(metricDescription, prometheus.GaugeValue, v, ctx.DeviceName, ctx.DeviceAddress,
-		re.Map["active-mac-address"], re.Map["server"], re.Map["status"], re.Map["active-address"], re.Map["host-name"])
+	metric, err := prometheus.NewConstMetric(metricDescription, prometheus.GaugeValue, v, ctx.DeviceName, ctx.DeviceAddress, re.Map["active-mac-address"], re.Map["server"], re.Map["status"], re.Map["active-address"], re.Map["host-name"])
+	if err != nil {
+		log.WithFields(log.Fields{
+			"device": ctx.DeviceName,
+			"error":  err,
+		}).Error("error parsing dhcp lease")
+		return
+	}
+	ctx.MetricsChan <- metric
 }

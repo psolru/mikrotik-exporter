@@ -13,7 +13,7 @@ import (
 )
 
 var (
-	protocols                       = []string{"bgp", "static", "ospf", "dynamic", "connect"}
+	protocols                       = []string{"bgp", "static", "ospf", "dynamic", "connect", "rip"}
 	labelNames                      = []string{"name", "address", "ip_version"}
 	totalRoutesMetricDescription    = metrics.BuildMetricDescription(prefix, "total", "number of routes in rib", labelNames)
 	protocolRoutesMetricDescription = metrics.BuildMetricDescription(prefix, "by_protocol", "number of routes per protocol in rib", append(labelNames, "protocol"))

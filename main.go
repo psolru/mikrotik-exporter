@@ -11,8 +11,8 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/collectors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"github.com/prometheus/common/version"
 	log "github.com/sirupsen/logrus"
 
 	"github.com/ogi4i/mikrotik-exporter/collector"
@@ -40,8 +40,6 @@ import (
 	"github.com/ogi4i/mikrotik-exporter/collector/wireless/w60g"
 	"github.com/ogi4i/mikrotik-exporter/config"
 )
-
-const appName = "mikrotik_exporter"
 
 var (
 	address               = flag.String("address", fromEnv("MIKROTIK_ADDRESS", ""), "address of the device")
@@ -172,7 +170,8 @@ func mustStartServer(cfg *config.Config) {
 func mustCreateMetricsHandler(cfg *config.Config) http.Handler {
 	registry := prometheus.NewRegistry()
 	registry.MustRegister(
-		version.NewCollector(appName),
+		collectors.NewGoCollector(),
+		collectors.NewBuildInfoCollector(),
 		collector.NewMikrotikCollector(
 			buildDevicesFromConfig(cfg),
 			collector.WithCollectors(append(buildCollectors(cfg.Features), defaultCollectors...)...),
