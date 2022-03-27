@@ -56,7 +56,7 @@ mocks: bin-deps
 	$(MINIMOCK_BIN) -g -i github.com/ogi4i/mikrotik-exporter/routeros.* -o ./routeros/mocks -s _mock.go
 
 .PHONY: test
-test: lint
+test:
 	$(info Running tests...)
 	@go test -v -coverprofile=cover.out ./...
 

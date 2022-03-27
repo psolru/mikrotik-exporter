@@ -1,6 +1,6 @@
 [![CI](https://github.com/ogi4i/mikrotik-exporter/actions/workflows/ci.yml/badge.svg)](https://github.com/ogi4i/mikrotik-exporter/actions/workflows/ci.yml)
-[![Docker Publish](https://github.com/ogi4i/mikrotik-exporter/actions/workflows/release.yml/badge.svg)](https://github.com/ogi4i/mikrotik-exporter/actions/workflows/publish.yml)
-[![Go Report Card](https://goreportcard.com/badge/github.com/ogi4i/mikrotik-exporter)](https://goreportcard.com/report/github.com/ogi4i/mikrotik-exporter)
+[![Docker Publish](https://github.com/ogi4i/mikrotik-exporter/actions/workflows/publish.yml/badge.svg)](https://github.com/ogi4i/mikrotik-exporter/actions/workflows/publish.yml)
+[![Go Report](https://goreportcard.com/badge/github.com/ogi4i/mikrotik-exporter)](https://goreportcard.com/report/github.com/ogi4i/mikrotik-exporter)
 [![Docker Pulls](https://img.shields.io/docker/pulls/ogi4i/mikrotik-exporter.svg)](https://hub.docker.com/r/ogi4i/mikrotik-exporter/)
 
 ## prometheus-mikrotik
