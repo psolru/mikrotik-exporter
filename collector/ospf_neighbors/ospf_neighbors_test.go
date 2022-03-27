@@ -43,7 +43,7 @@ func Test_ospfNeighborsCollector_Describe(t *testing.T) {
 	<-done
 	r.ElementsMatch([]*prometheus.Desc{
 		metrics.BuildMetricDescription(prefix, "state_changes", "number of ospf neighbor state changes",
-			[]string{"name", "address", "instance", "router_id", "neighbor_address", "interface", "state"},
+			[]string{"name", "address", "instance", "router_id", "neighbor_address", "state"},
 		),
 	}, got)
 }
@@ -69,7 +69,7 @@ func Test_ospfNeighborsCollector_Collect(t *testing.T) {
 			setMocks: func() {
 				routerOSClientMock.RunMock.When([]string{
 					"/routing/ospf/neighbor/print",
-					"=.proplist=instance,router-id,address,interface,state,state-changes",
+					"=.proplist=instance,router-id,address,state,state-changes",
 				}...).Then(&routeros.Reply{
 					Re: []*proto.Sentence{
 						{
@@ -77,7 +77,6 @@ func Test_ospfNeighborsCollector_Collect(t *testing.T) {
 								"instance":      "default",
 								"router-id":     "192.168.1.1",
 								"address":       "192.168.1.2",
-								"interface":     "ether1",
 								"state":         "Full",
 								"state-changes": "3",
 							},
@@ -88,9 +87,9 @@ func Test_ospfNeighborsCollector_Collect(t *testing.T) {
 			want: []prometheus.Metric{
 				prometheus.MustNewConstMetric(
 					metrics.BuildMetricDescription(prefix, "state_changes", "number of ospf neighbor state changes",
-						[]string{"name", "address", "instance", "router_id", "neighbor_address", "interface", "state"},
+						[]string{"name", "address", "instance", "router_id", "neighbor_address", "state"},
 					),
-					prometheus.CounterValue, 3, "device", "address", "default", "192.168.1.1", "192.168.1.2", "ether1", "Full",
+					prometheus.CounterValue, 3, "device", "address", "default", "192.168.1.1", "192.168.1.2", "Full",
 				),
 			},
 		},
@@ -99,7 +98,7 @@ func Test_ospfNeighborsCollector_Collect(t *testing.T) {
 			setMocks: func() {
 				routerOSClientMock.RunMock.When([]string{
 					"/routing/ospf/neighbor/print",
-					"=.proplist=instance,router-id,address,interface,state,state-changes",
+					"=.proplist=instance,router-id,address,state,state-changes",
 				}...).Then(nil, errors.New("some fetch error"))
 			},
 			errWant: "failed to fetch ospf neighbors: some fetch error",
@@ -109,7 +108,7 @@ func Test_ospfNeighborsCollector_Collect(t *testing.T) {
 			setMocks: func() {
 				routerOSClientMock.RunMock.When([]string{
 					"/routing/ospf/neighbor/print",
-					"=.proplist=instance,router-id,address,interface,state,state-changes",
+					"=.proplist=instance,router-id,address,state,state-changes",
 				}...).Then(&routeros.Reply{
 					Re: []*proto.Sentence{
 						{
@@ -117,7 +116,6 @@ func Test_ospfNeighborsCollector_Collect(t *testing.T) {
 								"instance":      "default",
 								"router-id":     "192.168.1.1",
 								"address":       "192.168.1.2",
-								"interface":     "ether1",
 								"state":         "Full",
 								"state-changes": "a3",
 							},

@@ -68,7 +68,7 @@ func (c *routesCollector) collectForIPVersion(topic, ipVersion string, ctx *cont
 func (c *routesCollector) collectTotalCount(topic, ipVersion string, ctx *context.Context) error {
 	reply, err := ctx.RouterOSClient.Run(
 		fmt.Sprintf("/%s/route/print", topic),
-		"?disabled=false",
+		"?active=true",
 		"=count-only=",
 	)
 	if err != nil {
@@ -101,8 +101,8 @@ func (c *routesCollector) collectTotalCount(topic, ipVersion string, ctx *contex
 func (c *routesCollector) collectCountByProtocol(topic, ipVersion, protocol string, ctx *context.Context) error {
 	reply, err := ctx.RouterOSClient.Run(
 		fmt.Sprintf("/%s/route/print", topic),
-		"?disabled=false",
-		fmt.Sprintf("?%s", protocol),
+		"?active=true",
+		fmt.Sprintf("?%s=true", protocol),
 		"=count-only=",
 	)
 	if err != nil {

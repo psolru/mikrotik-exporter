@@ -14,9 +14,9 @@ import (
 )
 
 var (
-	properties        = []string{"instance", "router-id", "address", "interface", "state", "state-changes"}
+	properties        = []string{"instance", "router-id", "address", "state", "state-changes"}
 	metricDescription = metrics.BuildMetricDescription(prefix, "state_changes", "number of ospf neighbor state changes",
-		[]string{"name", "address", "instance", "router_id", "neighbor_address", "interface", "state"},
+		[]string{"name", "address", "instance", "router_id", "neighbor_address", "state"},
 	)
 )
 
@@ -81,6 +81,6 @@ func (c *ospfNeighborsCollector) collectForStat(re *proto.Sentence, ctx *context
 
 	ctx.MetricsChan <- prometheus.MustNewConstMetric(metricDescription, prometheus.CounterValue, v,
 		ctx.DeviceName, ctx.DeviceAddress,
-		re.Map["instance"], re.Map["router-id"], re.Map["address"], re.Map["interface"], re.Map["state"],
+		re.Map["instance"], re.Map["router-id"], re.Map["address"], re.Map["state"],
 	)
 }

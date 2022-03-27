@@ -68,7 +68,7 @@ func Test_routesCollector_Collect(t *testing.T) {
 			setMocks: func() {
 				routerOSClientMock.RunMock.When([]string{
 					"/ip/route/print",
-					"?disabled=false",
+					"?active=true",
 					"=count-only=",
 				}...).Then(&routeros.Reply{
 					Done: &proto.Sentence{
@@ -79,8 +79,8 @@ func Test_routesCollector_Collect(t *testing.T) {
 				}, nil)
 				routerOSClientMock.RunMock.When([]string{
 					"/ip/route/print",
-					"?disabled=false",
-					"?bgp",
+					"?active=true",
+					"?bgp=true",
 					"=count-only=",
 				}...).Then(&routeros.Reply{
 					Done: &proto.Sentence{
@@ -91,8 +91,8 @@ func Test_routesCollector_Collect(t *testing.T) {
 				}, nil)
 				routerOSClientMock.RunMock.When([]string{
 					"/ip/route/print",
-					"?disabled=false",
-					"?connect",
+					"?active=true",
+					"?connect=true",
 					"=count-only=",
 				}...).Then(&routeros.Reply{
 					Done: &proto.Sentence{
@@ -103,8 +103,8 @@ func Test_routesCollector_Collect(t *testing.T) {
 				}, nil)
 				routerOSClientMock.RunMock.When([]string{
 					"/ip/route/print",
-					"?disabled=false",
-					"?ospf",
+					"?active=true",
+					"?ospf=true",
 					"=count-only=",
 				}...).Then(&routeros.Reply{
 					Done: &proto.Sentence{
@@ -115,8 +115,8 @@ func Test_routesCollector_Collect(t *testing.T) {
 				}, nil)
 				routerOSClientMock.RunMock.When([]string{
 					"/ip/route/print",
-					"?disabled=false",
-					"?dynamic",
+					"?active=true",
+					"?dynamic=true",
 					"=count-only=",
 				}...).Then(&routeros.Reply{
 					Done: &proto.Sentence{
@@ -127,8 +127,8 @@ func Test_routesCollector_Collect(t *testing.T) {
 				}, nil)
 				routerOSClientMock.RunMock.When([]string{
 					"/ip/route/print",
-					"?disabled=false",
-					"?static",
+					"?active=true",
+					"?static=true",
 					"=count-only=",
 				}...).Then(&routeros.Reply{
 					Done: &proto.Sentence{
@@ -139,8 +139,8 @@ func Test_routesCollector_Collect(t *testing.T) {
 				}, nil)
 				routerOSClientMock.RunMock.When([]string{
 					"/ip/route/print",
-					"?disabled=false",
-					"?rip",
+					"?active=true",
+					"?rip=true",
 					"=count-only=",
 				}...).Then(&routeros.Reply{
 					Done: &proto.Sentence{
@@ -152,7 +152,7 @@ func Test_routesCollector_Collect(t *testing.T) {
 
 				routerOSClientMock.RunMock.When([]string{
 					"/ipv6/route/print",
-					"?disabled=false",
+					"?active=true",
 					"=count-only=",
 				}...).Then(&routeros.Reply{
 					Done: &proto.Sentence{
@@ -163,8 +163,8 @@ func Test_routesCollector_Collect(t *testing.T) {
 				}, nil)
 				routerOSClientMock.RunMock.When([]string{
 					"/ipv6/route/print",
-					"?disabled=false",
-					"?bgp",
+					"?active=true",
+					"?bgp=true",
 					"=count-only=",
 				}...).Then(&routeros.Reply{
 					Done: &proto.Sentence{
@@ -175,8 +175,8 @@ func Test_routesCollector_Collect(t *testing.T) {
 				}, nil)
 				routerOSClientMock.RunMock.When([]string{
 					"/ipv6/route/print",
-					"?disabled=false",
-					"?ospf",
+					"?active=true",
+					"?ospf=true",
 					"=count-only=",
 				}...).Then(&routeros.Reply{
 					Done: &proto.Sentence{
@@ -187,8 +187,8 @@ func Test_routesCollector_Collect(t *testing.T) {
 				}, nil)
 				routerOSClientMock.RunMock.When([]string{
 					"/ipv6/route/print",
-					"?disabled=false",
-					"?connect",
+					"?active=true",
+					"?connect=true",
 					"=count-only=",
 				}...).Then(&routeros.Reply{
 					Done: &proto.Sentence{
@@ -199,8 +199,8 @@ func Test_routesCollector_Collect(t *testing.T) {
 				}, nil)
 				routerOSClientMock.RunMock.When([]string{
 					"/ipv6/route/print",
-					"?disabled=false",
-					"?dynamic",
+					"?active=true",
+					"?dynamic=true",
 					"=count-only=",
 				}...).Then(&routeros.Reply{
 					Done: &proto.Sentence{
@@ -211,8 +211,8 @@ func Test_routesCollector_Collect(t *testing.T) {
 				}, nil)
 				routerOSClientMock.RunMock.When([]string{
 					"/ipv6/route/print",
-					"?disabled=false",
-					"?static",
+					"?active=true",
+					"?static=true",
 					"=count-only=",
 				}...).Then(&routeros.Reply{
 					Done: &proto.Sentence{
@@ -223,8 +223,8 @@ func Test_routesCollector_Collect(t *testing.T) {
 				}, nil)
 				routerOSClientMock.RunMock.When([]string{
 					"/ipv6/route/print",
-					"?disabled=false",
-					"?rip",
+					"?active=true",
+					"?rip=true",
 					"=count-only=",
 				}...).Then(&routeros.Reply{
 					Done: &proto.Sentence{
@@ -307,7 +307,7 @@ func Test_routesCollector_Collect(t *testing.T) {
 			setMocks: func() {
 				routerOSClientMock.RunMock.When([]string{
 					"/ip/route/print",
-					"?disabled=false",
+					"?active=true",
 					"=count-only=",
 				}...).Then(&routeros.Reply{
 					Done: &proto.Sentence{
@@ -318,8 +318,8 @@ func Test_routesCollector_Collect(t *testing.T) {
 				}, nil)
 				routerOSClientMock.RunMock.When([]string{
 					"/ip/route/print",
-					"?disabled=false",
-					"?bgp",
+					"?active=true",
+					"?bgp=true",
 					"=count-only=",
 				}...).Then(&routeros.Reply{
 					Done: &proto.Sentence{
@@ -330,8 +330,8 @@ func Test_routesCollector_Collect(t *testing.T) {
 				}, nil)
 				routerOSClientMock.RunMock.When([]string{
 					"/ip/route/print",
-					"?disabled=false",
-					"?connect",
+					"?active=true",
+					"?connect=true",
 					"=count-only=",
 				}...).Then(&routeros.Reply{
 					Done: &proto.Sentence{
@@ -342,8 +342,8 @@ func Test_routesCollector_Collect(t *testing.T) {
 				}, nil)
 				routerOSClientMock.RunMock.When([]string{
 					"/ip/route/print",
-					"?disabled=false",
-					"?ospf",
+					"?active=true",
+					"?ospf=true",
 					"=count-only=",
 				}...).Then(&routeros.Reply{
 					Done: &proto.Sentence{
@@ -354,8 +354,8 @@ func Test_routesCollector_Collect(t *testing.T) {
 				}, nil)
 				routerOSClientMock.RunMock.When([]string{
 					"/ip/route/print",
-					"?disabled=false",
-					"?dynamic",
+					"?active=true",
+					"?dynamic=true",
 					"=count-only=",
 				}...).Then(&routeros.Reply{
 					Done: &proto.Sentence{
@@ -366,8 +366,8 @@ func Test_routesCollector_Collect(t *testing.T) {
 				}, nil)
 				routerOSClientMock.RunMock.When([]string{
 					"/ip/route/print",
-					"?disabled=false",
-					"?static",
+					"?active=true",
+					"?static=true",
 					"=count-only=",
 				}...).Then(&routeros.Reply{
 					Done: &proto.Sentence{
@@ -378,8 +378,8 @@ func Test_routesCollector_Collect(t *testing.T) {
 				}, nil)
 				routerOSClientMock.RunMock.When([]string{
 					"/ip/route/print",
-					"?disabled=false",
-					"?rip",
+					"?active=true",
+					"?rip=true",
 					"=count-only=",
 				}...).Then(&routeros.Reply{
 					Done: &proto.Sentence{
@@ -391,7 +391,7 @@ func Test_routesCollector_Collect(t *testing.T) {
 
 				routerOSClientMock.RunMock.When([]string{
 					"/ipv6/route/print",
-					"?disabled=false",
+					"?active=true",
 					"=count-only=",
 				}...).Then(&routeros.Reply{
 					Done: &proto.Sentence{
@@ -402,8 +402,8 @@ func Test_routesCollector_Collect(t *testing.T) {
 				}, nil)
 				routerOSClientMock.RunMock.When([]string{
 					"/ipv6/route/print",
-					"?disabled=false",
-					"?bgp",
+					"?active=true",
+					"?bgp=true",
 					"=count-only=",
 				}...).Then(&routeros.Reply{
 					Done: &proto.Sentence{
@@ -414,8 +414,8 @@ func Test_routesCollector_Collect(t *testing.T) {
 				}, nil)
 				routerOSClientMock.RunMock.When([]string{
 					"/ipv6/route/print",
-					"?disabled=false",
-					"?ospf",
+					"?active=true",
+					"?ospf=true",
 					"=count-only=",
 				}...).Then(&routeros.Reply{
 					Done: &proto.Sentence{
@@ -426,8 +426,8 @@ func Test_routesCollector_Collect(t *testing.T) {
 				}, nil)
 				routerOSClientMock.RunMock.When([]string{
 					"/ipv6/route/print",
-					"?disabled=false",
-					"?connect",
+					"?active=true",
+					"?connect=true",
 					"=count-only=",
 				}...).Then(&routeros.Reply{
 					Done: &proto.Sentence{
@@ -438,8 +438,8 @@ func Test_routesCollector_Collect(t *testing.T) {
 				}, nil)
 				routerOSClientMock.RunMock.When([]string{
 					"/ipv6/route/print",
-					"?disabled=false",
-					"?dynamic",
+					"?active=true",
+					"?dynamic=true",
 					"=count-only=",
 				}...).Then(&routeros.Reply{
 					Done: &proto.Sentence{
@@ -450,8 +450,8 @@ func Test_routesCollector_Collect(t *testing.T) {
 				}, nil)
 				routerOSClientMock.RunMock.When([]string{
 					"/ipv6/route/print",
-					"?disabled=false",
-					"?static",
+					"?active=true",
+					"?static=true",
 					"=count-only=",
 				}...).Then(&routeros.Reply{
 					Done: &proto.Sentence{
@@ -462,8 +462,8 @@ func Test_routesCollector_Collect(t *testing.T) {
 				}, nil)
 				routerOSClientMock.RunMock.When([]string{
 					"/ipv6/route/print",
-					"?disabled=false",
-					"?rip",
+					"?active=true",
+					"?rip=true",
 					"=count-only=",
 				}...).Then(&routeros.Reply{
 					Done: &proto.Sentence{
