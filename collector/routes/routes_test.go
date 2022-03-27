@@ -52,9 +52,9 @@ func Test_routesCollector_Collect(t *testing.T) {
 
 	c := NewCollector()
 
-	routerOSClientMock := mocks.NewRouterOSClientMock(t)
+	routerOSClientMock := mocks.NewClientMock(t)
 	resetMocks := func() {
-		routerOSClientMock = mocks.NewRouterOSClientMock(t)
+		routerOSClientMock = mocks.NewClientMock(t)
 	}
 
 	testCases := []struct {

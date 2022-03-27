@@ -118,7 +118,7 @@ func Test_collector_Collect(t *testing.T) {
 	}
 
 	mc := minimock.NewController(t)
-	routerOSClientMock := routerosMocks.NewRouterOSClientMock(mc)
+	routerOSClientMock := routerosMocks.NewClientMock(mc)
 	featureCollectorMock := mocks.NewFeatureCollectorMock(mc)
 	featureCollectorMock.NameMock.Return("testCollector")
 	featureCollectorMock.CollectMock.Set(func(ctx *context.Context) error {
@@ -139,7 +139,7 @@ func Test_collector_Collect(t *testing.T) {
 
 	resetMocks := func() {
 		mc = minimock.NewController(t)
-		routerOSClientMock = routerosMocks.NewRouterOSClientMock(mc)
+		routerOSClientMock = routerosMocks.NewClientMock(mc)
 	}
 
 	testCases := []struct {

@@ -1,21 +1,22 @@
-[![Docker Pulls](https://img.shields.io/docker/pulls/ogi4i/mikrotik-exporter.svg)](https://hub.docker.com/r/nshttpd/mikrotik-exporter/)
+[![CI](https://github.com/ogi4i/mikrotik-exporter/actions/workflows/ci.yml/badge.svg)](https://github.com/ogi4i/mikrotik-exporter/actions/workflows/ci.yml)
+[![Docker Publish](https://github.com/ogi4i/mikrotik-exporter/actions/workflows/release.yml/badge.svg)](https://github.com/ogi4i/mikrotik-exporter/actions/workflows/publish.yml)
+[![Go Report Card](https://goreportcard.com/badge/github.com/ogi4i/mikrotik-exporter)](https://goreportcard.com/report/github.com/ogi4i/mikrotik-exporter)
+[![Docker Pulls](https://img.shields.io/docker/pulls/ogi4i/mikrotik-exporter.svg)](https://hub.docker.com/r/ogi4i/mikrotik-exporter/)
 
 ## prometheus-mikrotik
 
 tl;dr - prometheus exporter for mikrotik devices
 
-This is still a work in progress .. consider `master` at the moment as a preview
-release.
+This is still a work in progress .. consider `master` at the moment as a preview release.
 
 #### Description
 
-A Prometheus Exporter for Mikrotik devices. Can be configured to collect metrics
-from a single device or multiple devices. Single device monitoring can be configured
-all on the command line. Multiple devices require a configuration file. A user will
-be required that has read-only access to the device configuration via the API.
+A Prometheus Exporter for Mikrotik devices. Can be configured to collect metrics from a single device or multiple
+devices. Single device monitoring can be configured all on the command line. Multiple devices require a configuration
+file. A user will be required that has read-only access to the device configuration via the API.
 
-Currently the exporter collects metrics for interfaces and system resources. Others
-can be added as long as published via the API.
+Currently the exporter collects metrics for interfaces and system resources. Others can be added as long as published
+via the API.
 
 #### Mikrotik Config
 
@@ -35,9 +36,8 @@ Create the user to access the API via.
 
 `./mikrotik-exporter -address 10.10.0.1 -device my_router -password changeme -user prometheus`
 
-where `address` is the address of your router. `device` is the label name for the device
-in the metrics output to prometheus. The `username` and `password` are the ones you
-created for the exporter to use to access the API.
+where `address` is the address of your router. `device` is the label name for the device in the metrics output to
+prometheus. The `username` and `password` are the ones you created for the exporter to use to access the API.
 
 User and password flags can be set with the `MIKROTIK_USER` and `MIKROTIK_PASSWORD` environment variables, respectively.
 
@@ -54,6 +54,7 @@ MIKROTIK_PASSWORD=changeme
 where `config-file` is the path to a config file in YAML format.
 
 ###### example config
+
 ```yaml
 devices:
   - name: my_router
@@ -102,10 +103,8 @@ features:
   conntrack: true
 ```
 
-If you add a devices with the `dns_record` parameter instead of `address` the exporter will perform a DNS query
-to obtain the SRV record and discover the devices dynamically. Also, you can specify a DNS server to use
-on the query.
-
+If you add a devices with the `dns_record` parameter instead of `address` the exporter will perform a DNS query to
+obtain the SRV record and discover the devices dynamically. Also, you can specify a DNS server to use on the query.
 
 ###### example output
 
