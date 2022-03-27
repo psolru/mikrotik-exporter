@@ -1,4 +1,4 @@
-[![Docker Pulls](https://img.shields.io/docker/pulls/nshttpd/mikrotik-exporter.svg)](https://hub.docker.com/r/nshttpd/mikrotik-exporter/)
+[![Docker Pulls](https://img.shields.io/docker/pulls/ogi4i/mikrotik-exporter.svg)](https://hub.docker.com/r/nshttpd/mikrotik-exporter/)
 
 ## prometheus-mikrotik
 
@@ -36,13 +36,13 @@ Create the user to access the API via.
 `./mikrotik-exporter -address 10.10.0.1 -device my_router -password changeme -user prometheus`
 
 where `address` is the address of your router. `device` is the label name for the device
-in the metrics output to prometheus. The `user` and `password` are the ones you
+in the metrics output to prometheus. The `username` and `password` are the ones you
 created for the exporter to use to access the API.
 
 User and password flags can be set with the `MIKROTIK_USER` and `MIKROTIK_PASSWORD` environment variables, respectively.
 
 ```
-MIKROTIK_USER=prometheus
+MIKROTIK_USERNAME=prometheus
 MIKROTIK_PASSWORD=changeme
 ./mikrotik-exporter -address 10.10.0.1 -device my_router
 ```
@@ -58,38 +58,51 @@ where `config-file` is the path to a config file in YAML format.
 devices:
   - name: my_router
     address: 10.10.0.1
-    user: prometheus
+    username: prometheus
     password: changeme
+    features:
+      bgp: true
+      dhcp: true
+      dhcp_leases: true
+      ip_pools: true
+      wlan: true
+      wlan_stations: true
+      bridge_hosts: true
   - name: my_second_router
     address: 10.10.0.2
     port: 8999
-    user: prometheus2
+    username: prometheus2
     password: password_to_second_router
+    client:
+      enable_tls: true
+      insecure_tls_skip_verify: true
   - name: routers_srv_dns
-    srv:
+    dns_record:
       record: _mikrotik._udp.example.com
-    user: prometheus
+    username: prometheus
     password: password_to_all_dns_routers
   - name: routers_srv_custom_dns
-    srv:
+    dns_record:
       record: _mikrotik2._udp.example.com
-      dns:
+      server:
         address: 1.1.1.1
         port: 53
-    user: prometheus
+    username: prometheus
     password: password_to_all_dns_routers
 
+client:
+  dial_timeout: 1s
+
 features:
-  bgp: true
-  dhcp: true
-  dhcpv6: true
-  dhcpl: true
+  firmware: true
   routes: true
-  pools: true
-  optics: true
+  ethernet: true
+  ipsec: true
+  ospf_neighbors: true
+  conntrack: true
 ```
 
-If you add a devices with the `srv` parameter instead of `address` the exporter will perform a DNS query
+If you add a devices with the `dns_record` parameter instead of `address` the exporter will perform a DNS query
 to obtain the SRV record and discover the devices dynamically. Also, you can specify a DNS server to use
 on the query.
 

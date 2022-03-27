@@ -25,7 +25,7 @@
         "containers": [
           {
             "name": "mikrotik-exporter",
-            "image": "nshttpd/mikrotik-exporter:044419a",
+            "image": "ogi4i/mikrotik-exporter:latest",
             "env": [
               {
                 "name": "DEVICE",
@@ -59,7 +59,7 @@
                 "valueFrom": {
                   "secretKeyRef": {
                     "name" : "mikrotik-exporter",
-                    "key" : "pasword"
+                    "key" : "password"
                   }
                 }
               }

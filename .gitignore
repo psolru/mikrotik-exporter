@@ -19,6 +19,7 @@
 .vscode
 debug
 .run/
+bin/
 
 mikrotik-exporter
 test-config.yml

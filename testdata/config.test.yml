@@ -1,0 +1,38 @@
+devices:
+  - name: test1
+    address: 192.168.1.1
+    username: foo
+    password: bar
+    client:
+      dial_timeout: 1s
+      enable_tls: true
+      insecure_tls_skip_verify: true
+  - name: test2
+    address: 192.168.2.1
+    username: test
+    password: 123
+    dns_record:
+      record: test.fqdn.com
+      server:
+        address: 1.1.1.1
+
+features:
+  bgp: true
+  dhcp: true
+  dhcp_ipv6: true
+  firmware: true
+  health: true
+  routes: true
+  ethernet: true
+  poe: true
+  ip_pools: true
+  sfp: true
+  wlan_stations: true
+  capsman: true
+  wlan: true
+  ipsec: true
+  ospf_neighbors: true
+  lte: true
+  netwatch: true
+  conntrack: true
+  bridge_hosts: true
