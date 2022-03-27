@@ -4,68 +4,77 @@ import (
 	"bytes"
 	"io/ioutil"
 	"testing"
+	"time"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestShouldParse(t *testing.T) {
-	b := loadTestFile(t)
-	c, err := Load(bytes.NewReader(b))
-	if err != nil {
-		t.Fatalf("could not parse: %v", err)
-	}
+	r := require.New(t)
+	t.Parallel()
 
-	if len(c.Devices) != 2 {
-		t.Fatalf("expected 2 devices, got %v", len(c.Devices))
-	}
+	t.Run("should parse", func(t *testing.T) {
+		cfg, err := Load(bytes.NewReader(loadTestFile(r)))
+		r.NoError(err)
 
-	assertDevice("test1", "192.168.1.1", "foo", "bar", c.Devices[0], t)
-	assertDevice("test2", "192.168.2.1", "test", "123", c.Devices[1], t)
-	assertFeature("BGP", c.Features.BGP, t)
-	assertFeature("DHCP", c.Features.DHCP, t)
-	assertFeature("DHCPv6", c.Features.DHCPv6, t)
-	assertFeature("Pools", c.Features.Pools, t)
-	assertFeature("Routes", c.Features.Routes, t)
-	assertFeature("Optics", c.Features.Optics, t)
-	assertFeature("WlanSTA", c.Features.WlanSTA, t)
-	assertFeature("Capsman", c.Features.Capsman, t)
-	assertFeature("WlanIF", c.Features.WlanIF, t)
-	assertFeature("Ipsec", c.Features.Ipsec, t)
-	assertFeature("IpsecPeers", c.Features.IpsecPeers, t)
-	assertFeature("OSPFNeighbor", c.Features.OSPFNeighbor, t)
-	assertFeature("LTE", c.Features.LTE, t)
-	assertFeature("Netwatch", c.Features.Netwatch, t)
-	assertFeature("Conntrack", c.Features.Conntrack, t)
-	assertFeature("BridgeHost", c.Features.BridgeHost, t)
+		r.Len(cfg.Devices, 2)
+		r.Equal(&Device{
+			Name:     "test1",
+			Address:  "192.168.1.1",
+			Username: "foo",
+			Password: "bar",
+			Client: &Client{
+				DialTimeout:           time.Second,
+				EnableTLS:             true,
+				InsecureTLSSkipVerify: true,
+			},
+		}, cfg.Devices[0])
+		r.Equal(&Device{
+			Name:     "test2",
+			Address:  "192.168.2.1",
+			Username: "test",
+			Password: "123",
+			DNSRecord: &SrvRecord{
+				Record: "test.fqdn.com",
+				Server: &DNSServer{
+					Address: "1.1.1.1",
+				},
+			},
+		}, cfg.Devices[1])
+
+		r.True(cfg.Features.BGP)
+		r.True(cfg.Features.DHCP)
+		r.True(cfg.Features.DHCPIPv6)
+		r.True(cfg.Features.Firmware)
+		r.True(cfg.Features.Health)
+		r.True(cfg.Features.IPPools)
+		r.True(cfg.Features.Routes)
+		r.True(cfg.Features.Ethernet)
+		r.True(cfg.Features.PoE)
+		r.True(cfg.Features.SFP)
+		r.True(cfg.Features.WLANStations)
+		r.True(cfg.Features.CAPsMAN)
+		r.True(cfg.Features.WLANInterfaces)
+		r.True(cfg.Features.IPSec)
+		r.True(cfg.Features.OSPFNeighbors)
+		r.True(cfg.Features.LTE)
+		r.True(cfg.Features.Netwatch)
+		r.True(cfg.Features.Conntrack)
+		r.True(cfg.Features.BridgeHosts)
+	})
+
+	t.Run("invalid yaml", func(t *testing.T) {
+		cfg, err := Load(bytes.NewReader([]byte(`devices:
+  name: test1
+  address: 192.168.1.1`)))
+		r.EqualError(err, "failed to unmarshal bytes to config: yaml: unmarshal errors:\n  line 2: cannot unmarshal !!map into []*config.Device")
+		r.Nil(cfg)
+	})
 }
 
-func loadTestFile(t *testing.T) []byte {
-	b, err := ioutil.ReadFile("test/config.test.yml")
-	if err != nil {
-		t.Fatalf("could not load config: %v", err)
-	}
+func loadTestFile(r *require.Assertions) []byte {
+	b, err := ioutil.ReadFile("../testdata/config.test.yml")
+	r.NoError(err)
 
 	return b
-}
-
-func assertDevice(name, address, user, password string, c Device, t *testing.T) {
-	if c.Name != name {
-		t.Fatalf("expected name %s, got %s", name, c.Name)
-	}
-
-	if c.Address != address {
-		t.Fatalf("expected address %s, got %s", address, c.Address)
-	}
-
-	if c.User != user {
-		t.Fatalf("expected user %s, got %s", user, c.User)
-	}
-
-	if c.Password != password {
-		t.Fatalf("expected password %s, got %s", password, c.Password)
-	}
-}
-
-func assertFeature(name string, v bool, t *testing.T) {
-	if !v {
-		t.Fatalf("exprected feature %s to be enabled", name)
-	}
 }

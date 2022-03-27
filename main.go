@@ -2,11 +2,13 @@ package main
 
 import (
 	"bytes"
+	"errors"
 	"flag"
-	"fmt"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -14,77 +16,75 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/ogi4i/mikrotik-exporter/collector"
+	"github.com/ogi4i/mikrotik-exporter/collector/bgp"
+	"github.com/ogi4i/mikrotik-exporter/collector/bridge_hosts"
+	"github.com/ogi4i/mikrotik-exporter/collector/capsman"
+	"github.com/ogi4i/mikrotik-exporter/collector/conntrack"
+	"github.com/ogi4i/mikrotik-exporter/collector/dhcp"
+	"github.com/ogi4i/mikrotik-exporter/collector/dhcp_ipv6"
+	"github.com/ogi4i/mikrotik-exporter/collector/firmware"
+	"github.com/ogi4i/mikrotik-exporter/collector/health"
+	interface_collector "github.com/ogi4i/mikrotik-exporter/collector/interface"
+	"github.com/ogi4i/mikrotik-exporter/collector/interface/ethernet"
+	"github.com/ogi4i/mikrotik-exporter/collector/interface/lte"
+	"github.com/ogi4i/mikrotik-exporter/collector/interface/sfp"
+	"github.com/ogi4i/mikrotik-exporter/collector/interface/wlan"
+	"github.com/ogi4i/mikrotik-exporter/collector/ip_pool"
+	"github.com/ogi4i/mikrotik-exporter/collector/ipsec"
+	"github.com/ogi4i/mikrotik-exporter/collector/netwatch"
+	"github.com/ogi4i/mikrotik-exporter/collector/ospf_neighbors"
+	"github.com/ogi4i/mikrotik-exporter/collector/poe"
+	"github.com/ogi4i/mikrotik-exporter/collector/resource"
+	"github.com/ogi4i/mikrotik-exporter/collector/routes"
+	"github.com/ogi4i/mikrotik-exporter/collector/wireless/stations"
+	"github.com/ogi4i/mikrotik-exporter/collector/wireless/w60g"
 	"github.com/ogi4i/mikrotik-exporter/config"
 )
 
-// single device can be defined via CLI flags, multiple via config file.
+const appName = "mikrotik_exporter"
+
 var (
-	address     = flag.String("address", "", "address of the device to monitor")
-	configFile  = flag.String("config-file", "", "config file to load")
-	device      = flag.String("device", "", "single device to monitor")
-	insecure    = flag.Bool("insecure", false, "skips verification of server certificate when using TLS (not recommended)")
-	logFormat   = flag.String("log-format", "json", "logformat text or json (default json)")
-	logLevel    = flag.String("log-level", "info", "log level")
-	metricsPath = flag.String("path", "/metrics", "path to answer requests on")
-	password    = flag.String("password", "", "password for authentication for single device")
-	deviceport  = flag.String("deviceport", "8728", "port for single device")
-	port        = flag.String("port", ":9436", "port number to listen on")
-	timeout     = flag.Duration("timeout", collector.DefaultTimeout, "timeout when connecting to devices")
-	tls         = flag.Bool("tls", false, "use tls to connect to routers")
-	user        = flag.String("user", "", "user for authentication with single device")
-	ver         = flag.Bool("version", false, "find the version of binary")
+	address               = flag.String("address", fromEnv("MIKROTIK_ADDRESS", ""), "address of the device")
+	configFile            = flag.String("config-file", fromEnv("MIKROTIK_EXPORTER_CONFIG_FILE", ""), "config file to load")
+	deviceName            = flag.String("name", fromEnv("MIKROTIK_DEVICE_NAME", ""), "name of the device")
+	logFormat             = flag.String("log-format", fromEnv("LOG_FORMAT", "json"), "log format text or json (default json)")
+	logLevel              = flag.String("log-level", fromEnv("LOG_LEVEL", "info"), "log level")
+	metricsPath           = flag.String("path", fromEnv("MIKROTIK_EXPORTER_PATH", "/metrics"), "path to answer requests on")
+	username              = flag.String("username", fromEnv("MIKROTIK_USERNAME", ""), "username for authentication with single device")
+	password              = flag.String("password", fromEnv("MIKROTIK_PASSWORD", ""), "password for authentication for single device")
+	devicePort            = flag.String("device-port", fromEnv("MIKROTIK_PORT", "8728"), "port for single device")
+	port                  = flag.String("port", fromEnv("MIKROTIK_EXPORTER_PORT", "9436"), "port number to listen on")
+	timeout               = flag.Duration("timeout", 0, "timeout when connecting to devices")
+	enableTLS             = flag.Bool("enable-tls", false, "enable TLS to connect to routers")
+	insecureTLSSkipVerify = flag.Bool("insecure-tls-skip-verify", false, "skips verification of server certificate when using TLS (not recommended)")
 
-	withBgp          = flag.Bool("with-bgp", false, "retrieves BGP routing infrormation")
-	withRoutes       = flag.Bool("with-routes", false, "retrieves routing table information")
-	withDHCP         = flag.Bool("with-dhcp", false, "retrieves DHCP server metrics")
-	withDHCPL        = flag.Bool("with-dhcpl", false, "retrieves DHCP server lease metrics")
-	withDHCPv6       = flag.Bool("with-dhcpv6", false, "retrieves DHCPv6 server metrics")
-	withFirmware     = flag.Bool("with-firmware", false, "retrieves firmware versions")
-	withHealth       = flag.Bool("with-health", false, "retrieves board Health metrics")
-	withPOE          = flag.Bool("with-poe", false, "retrieves PoE metrics")
-	withPools        = flag.Bool("with-pools", false, "retrieves IP(v6) pool metrics")
-	withOptics       = flag.Bool("with-optics", false, "retrieves optical diagnostic metrics")
-	withW60G         = flag.Bool("with-w60g", false, "retrieves w60g interface metrics")
-	withWlanSTA      = flag.Bool("with-wlansta", false, "retrieves connected wlan station metrics")
-	withCapsman      = flag.Bool("with-capsman", false, "retrieves capsman station metrics")
-	withWlanIF       = flag.Bool("with-wlanif", false, "retrieves wlan interface metrics")
-	withMonitor      = flag.Bool("with-monitor", false, "retrieves ethernet interface monitor info")
-	withIpsec        = flag.Bool("with-ipsec", false, "retrieves ipsec metrics")
-	withIpsecPeers   = flag.Bool("with-ipsec-peers", false, "retrieves ipsec peers metrics")
-	withOSPFNeighbor = flag.Bool("with-ospf-neighbor", false, "retrieves ospf neighbor metrics")
-	withLTE          = flag.Bool("with-lte", false, "retrieves lte metrics")
-	withNetwatch     = flag.Bool("with-netwatch", false, "retrieves netwatch metrics")
-	withConntrack    = flag.Bool("with-conntrack", false, "retrieves conntrack table metrics")
-	withBridgeHost   = flag.Bool("with-bridge-host", false, "retrieves bridge host metrics")
+	defaultCollectors = []collector.FeatureCollector{
+		interface_collector.NewCollector(),
+		resource.NewCollector(),
+	}
 
-	cfg *config.Config
-
-	appVersion = "DEVELOPMENT"
-	shortSha   = "0xDEADBEEF"
+	errInvalidParamForSingleDevice = errors.New("missing required param for single device configuration")
 )
-
-func init() {
-	prometheus.MustRegister(version.NewCollector("mikrotik_exporter"))
-}
 
 func main() {
 	flag.Parse()
 
-	if *ver {
-		fmt.Printf("\nVersion:   %s\nShort SHA: %s\n\n", appVersion, shortSha)
-		os.Exit(0)
-	}
-
 	configureLog()
 
-	c, err := loadConfig()
+	cfg, err := loadConfig()
 	if err != nil {
-		log.Errorf("Could not load config: %v", err)
-		os.Exit(3)
+		log.Fatalf("Could not load config: %v", err)
 	}
-	cfg = c
 
-	startServer()
+	mustStartServer(cfg)
+}
+
+func fromEnv(key, defaultValue string) string {
+	if v := os.Getenv(key); len(v) != 0 {
+		return v
+	}
+
+	return defaultValue
 }
 
 func configureLog() {
@@ -120,42 +120,39 @@ func loadConfigFromFile() (*config.Config, error) {
 }
 
 func loadConfigFromFlags() (*config.Config, error) {
-	// Attempt to read credentials from env if not already defined
-	if *user == "" {
-		*user = os.Getenv("MIKROTIK_USER")
-	}
-	if *password == "" {
-		*password = os.Getenv("MIKROTIK_PASSWORD")
-	}
-	if *device == "" || *address == "" || *user == "" || *password == "" {
-		return nil, fmt.Errorf("missing required param for single device configuration")
+	if len(*deviceName) == 0 ||
+		len(*address) == 0 ||
+		len(*username) == 0 ||
+		len(*password) == 0 {
+		return nil, errInvalidParamForSingleDevice
 	}
 
 	return &config.Config{
-		Devices: []config.Device{
+		Devices: []*config.Device{
 			{
-				Name:     *device,
+				Name:     *deviceName,
 				Address:  *address,
-				User:     *user,
+				Username: *username,
 				Password: *password,
-				Port:     *deviceport,
+				Port:     *devicePort,
+				Client: &config.Client{
+					DialTimeout:           *timeout,
+					EnableTLS:             *enableTLS,
+					InsecureTLSSkipVerify: *insecureTLSSkipVerify,
+				},
 			},
 		},
 	}, nil
 }
 
-func startServer() {
-	h, err := createMetricsHandler()
-	if err != nil {
-		log.Fatal(err)
-	}
-	http.Handle(*metricsPath, h)
+func mustStartServer(cfg *config.Config) {
+	http.Handle(*metricsPath, mustCreateMetricsHandler(cfg))
 
-	http.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc("/live", func(w http.ResponseWriter, _ *http.Request) {
 		_, _ = w.Write([]byte("ok"))
 	})
 
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc("/", func(w http.ResponseWriter, _ *http.Request) {
 		_, _ = w.Write([]byte(`<html>
 			<head><title>Mikrotik Exporter</title></head>
 			<body>
@@ -165,128 +162,179 @@ func startServer() {
 			</html>`))
 	})
 
-	log.Info("Listening on ", *port)
-	log.Fatal(http.ListenAndServe(*port, nil))
+	log.Infof("Listening on: %s", *port)
+
+	if err := http.ListenAndServe(":"+*port, nil); err != nil && err != http.ErrServerClosed {
+		log.Fatalf("failed to start server: %v", err)
+	}
 }
 
-func createMetricsHandler() (http.Handler, error) {
-	opts := collectorOptions()
-	nc, err := collector.NewCollector(cfg, opts...)
-	if err != nil {
-		return nil, err
-	}
-
+func mustCreateMetricsHandler(cfg *config.Config) http.Handler {
 	registry := prometheus.NewRegistry()
-	err = registry.Register(nc)
-	if err != nil {
-		return nil, err
-	}
+	registry.MustRegister(
+		version.NewCollector(appName),
+		collector.NewMikrotikCollector(
+			buildDevicesFromConfig(cfg),
+			collector.WithCollectors(append(buildCollectors(cfg.Features), defaultCollectors...)...),
+		),
+	)
 
-	return promhttp.HandlerFor(registry,
+	return promhttp.HandlerFor(
+		registry,
 		promhttp.HandlerOpts{
 			ErrorLog:      log.New(),
 			ErrorHandling: promhttp.ContinueOnError,
-		}), nil
+		},
+	)
 }
 
-func collectorOptions() []collector.Option {
-	opts := []collector.Option{}
-
-	if *withBgp || cfg.Features.BGP {
-		opts = append(opts, collector.WithBGP())
+func buildCollectors(features *config.Features) []collector.FeatureCollector {
+	if features == nil {
+		return nil
 	}
 
-	if *withRoutes || cfg.Features.Routes {
-		opts = append(opts, collector.WithRoutes())
+	var collectors []collector.FeatureCollector
+
+	if features.BGP {
+		collectors = append(collectors, bgp.NewCollector())
 	}
 
-	if *withDHCP || cfg.Features.DHCP {
-		opts = append(opts, collector.WithDHCP())
+	if features.Routes {
+		collectors = append(collectors, routes.NewCollector())
 	}
 
-	if *withDHCPL || cfg.Features.DHCPL {
-		opts = append(opts, collector.WithDHCPL())
+	if features.DHCP {
+		collectors = append(collectors, dhcp.NewCollector())
 	}
 
-	if *withDHCPv6 || cfg.Features.DHCPv6 {
-		opts = append(opts, collector.WithDHCPv6())
+	if features.DHCPIPv6 {
+		collectors = append(collectors, dhcp_ipv6.NewCollector())
 	}
 
-	if *withFirmware || cfg.Features.Firmware {
-		opts = append(opts, collector.WithFirmware())
+	if features.Firmware {
+		collectors = append(collectors, firmware.NewCollector())
 	}
 
-	if *withHealth || cfg.Features.Health {
-		opts = append(opts, collector.WithHealth())
+	if features.Health {
+		collectors = append(collectors, health.NewCollector())
 	}
 
-	if *withPOE || cfg.Features.POE {
-		opts = append(opts, collector.WithPOE())
+	if features.PoE {
+		collectors = append(collectors, poe.NewCollector())
 	}
 
-	if *withPools || cfg.Features.Pools {
-		opts = append(opts, collector.WithPools())
+	if features.IPPools {
+		collectors = append(collectors, ip_pool.NewCollector())
 	}
 
-	if *withOptics || cfg.Features.Optics {
-		opts = append(opts, collector.WithOptics())
+	if features.SFP {
+		collectors = append(collectors, sfp.NewCollector())
 	}
 
-	if *withW60G || cfg.Features.W60G {
-		opts = append(opts, collector.WithW60G())
+	if features.W60G {
+		collectors = append(collectors, w60g.NewCollector())
 	}
 
-	if *withWlanSTA || cfg.Features.WlanSTA {
-		opts = append(opts, collector.WithWlanSTA())
+	if features.WLANStations {
+		collectors = append(collectors, stations.NewCollector())
 	}
 
-	if *withCapsman || cfg.Features.Capsman {
-		opts = append(opts, collector.WithCapsman())
+	if features.CAPsMAN {
+		collectors = append(collectors, capsman.NewCollector())
 	}
 
-	if *withWlanIF || cfg.Features.WlanIF {
-		opts = append(opts, collector.WithWlanIF())
+	if features.WLANInterfaces {
+		collectors = append(collectors, wlan.NewCollector())
 	}
 
-	if *withMonitor || cfg.Features.Monitor {
-		opts = append(opts, collector.WithMonitor())
+	if features.Ethernet {
+		collectors = append(collectors, ethernet.NewCollector())
 	}
 
-	if *withIpsec || cfg.Features.Ipsec {
-		opts = append(opts, collector.WithIpsec())
+	if features.IPSec {
+		collectors = append(collectors, ipsec.NewCollector())
 	}
 
-	if *withIpsecPeers || cfg.Features.IpsecPeers {
-		opts = append(opts, collector.WithIpsecPeers())
+	if features.OSPFNeighbors {
+		collectors = append(collectors, ospf_neighbors.NewCollector())
 	}
 
-	if *withOSPFNeighbor || cfg.Features.OSPFNeighbor {
-		opts = append(opts, collector.WithOSPFNeighbor())
+	if features.LTE {
+		collectors = append(collectors, lte.NewCollector())
 	}
 
-	if *withLTE || cfg.Features.LTE {
-		opts = append(opts, collector.WithLTE())
+	if features.Netwatch {
+		collectors = append(collectors, netwatch.NewCollector())
 	}
 
-	if *withNetwatch || cfg.Features.Netwatch {
-		opts = append(opts, collector.WithNetwatch())
+	if features.Conntrack {
+		collectors = append(collectors, conntrack.NewCollector())
 	}
 
-	if *withConntrack || cfg.Features.Conntrack {
-		opts = append(opts, collector.WithConntrack())
+	if features.BridgeHosts {
+		collectors = append(collectors, bridge_hosts.NewCollector())
 	}
 
-	if *withBridgeHost || cfg.Features.BridgeHost {
-		opts = append(opts, collector.WithBridgeHost())
+	return collectors
+}
+
+func buildDevicesFromConfig(cfg *config.Config) []*collector.Device {
+	res := make([]*collector.Device, 0, len(cfg.Devices))
+	for _, d := range cfg.Devices {
+		res = append(res, &collector.Device{
+			Name:       d.Name,
+			Address:    d.Address,
+			Port:       d.Port,
+			Username:   d.Username,
+			Password:   d.Password,
+			Client:     buildClient(cfg.Client, d.Client),
+			DNSRecord:  buildDNSRecord(d),
+			Collectors: buildCollectors(d.Features),
+		})
+	}
+	return res
+}
+
+func buildClient(appLevelClient, deviceLevelClient *config.Client) collector.Client {
+	const defaultDialTimeout = 5 * time.Second
+
+	switch {
+	case appLevelClient == nil && deviceLevelClient == nil:
+		return collector.Client{
+			DialTimeout:           defaultDialTimeout,
+			EnableTLS:             false,
+			InsecureTLSSkipVerify: false,
+		}
+	case deviceLevelClient == nil:
+		return collector.Client{
+			DialTimeout:           appLevelClient.DialTimeout,
+			EnableTLS:             appLevelClient.EnableTLS,
+			InsecureTLSSkipVerify: appLevelClient.InsecureTLSSkipVerify,
+		}
+	default:
+		return collector.Client{
+			DialTimeout:           deviceLevelClient.DialTimeout,
+			EnableTLS:             deviceLevelClient.EnableTLS,
+			InsecureTLSSkipVerify: deviceLevelClient.InsecureTLSSkipVerify,
+		}
+	}
+}
+
+func buildDNSRecord(d *config.Device) *collector.Record {
+	if d.DNSRecord == nil {
+		return nil
 	}
 
-	if *timeout != collector.DefaultTimeout {
-		opts = append(opts, collector.WithTimeout(*timeout))
+	return &collector.Record{
+		Name:          d.DNSRecord.Record,
+		ServerAddress: buildServerAddress(d.DNSRecord.Server),
+	}
+}
+
+func buildServerAddress(s *config.DNSServer) string {
+	if s == nil {
+		return ""
 	}
 
-	if *tls {
-		opts = append(opts, collector.WithTLS(*insecure))
-	}
-
-	return opts
+	return net.JoinHostPort(s.Address, s.Port)
 }

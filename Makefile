@@ -1,25 +1,31 @@
-# go run -ldflags "-X mikrotik-exporter/cmd.version=6.6.7-BETA -X mikrotik-exporter/cmd.shortSha=`git rev-parse HEAD`" main.go version
+LOCAL_BIN:=$(CURDIR)/bin
+MINIMOCK_BIN:=$(LOCAL_BIN)/minimock
+GOLANGCI_BIN:=$(LOCAL_BIN)/golangci-lint
 
-VERSION=`cat VERSION`
-SHORTSHA=`git rev-parse --short HEAD`
+export VERSION=1.1.0
 
-LDFLAGS=-X main.appVersion=$(VERSION)
-LDFLAGS+=-X main.shortSha=$(SHORTSHA)
+export GOSUMDB=sum.golang.org
+export GONOPROXY=
+export GONOSUMDB=
+export GOPRIVATE=
+export GOPROXY=
 
-build:
-	go build -ldflags "$(LDFLAGS)" .
+docker-publish:
+	./scripts/docker-publish.sh
 
-utils:
-	go get github.com/mitchellh/gox
-	go get github.com/tcnksm/ghr
+bin-deps:
+	$(info #Installing binary dependencies...)
+	tmp=$$(mktemp -d) && cd $$tmp && pwd && go mod init temp && \
+	GOBIN=$(LOCAL_BIN) go install github.com/gojuno/minimock/v3/cmd/minimock@v3.0.10 && \
+	GOBIN=$(LOCAL_BIN) go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.44.2
 
-deploy: utils
-	CGO_ENABLED=0 gox -os="linux freebsd netbsd" -arch="amd64 arm arm64 386" -parallel=4 -ldflags "$(LDFLAGS)" -output "dist/mikrotik-exporter_{{.OS}}_{{.Arch}}"
-	@ghr -t $(GITHUB_TOKEN) -u $(CIRCLE_PROJECT_USERNAME) -r $(CIRCLE_PROJECT_REPONAME) -replace $(VERSION) dist/
+lint:
+	$(info #Running lint...)
+	$(GOLANGCI_BIN) run --new-from-rev=origin/master --config=.golangci.yaml ./...
 
-dockerhub: deploy
-	@docker login -u $(DOCKER_USER) -p $(DOCKER_PASS)
-	docker build -t $(CIRCLE_PROJECT_USERNAME)/$(CIRCLE_PROJECT_REPONAME):$(VERSION) .
-	docker push $(CIRCLE_PROJECT_USERNAME)/$(CIRCLE_PROJECT_REPONAME):$(VERSION)
-	docker build -f Dockerfile.arm64 -t $(CIRCLE_PROJECT_USERNAME)/$(CIRCLE_PROJECT_REPONAME)-linux-arm64:$(VERSION) .
-	docker push $(CIRCLE_PROJECT_USERNAME)/$(CIRCLE_PROJECT_REPONAME)-linux-arm64:$(VERSION)
+lint-full:
+	$(GOLANGCI_BIN) run --config=.golangci.yaml ./...
+
+mocks:
+	$(MINIMOCK_BIN) -g -i github.com/ogi4i/mikrotik-exporter/collector.* -o ./collector/mocks -s _mock.go
+	$(MINIMOCK_BIN) -g -i github.com/ogi4i/mikrotik-exporter/routeros.* -o ./routeros/mocks -s _mock.go

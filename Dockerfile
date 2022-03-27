@@ -1,9 +1,13 @@
-FROM golang:1.17 AS builder
+FROM --platform=$BUILDPLATFORM golang:1.17-alpine AS builder
 WORKDIR /go/src/app
 COPY . .
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build
+ARG TARGETARCH
+ARG TARGETOS
+RUN GOOS=$TARGETOS GOARCH=$TARGETARCH go build
 
-FROM scratch
+FROM alpine
 COPY --from=builder /go/src/app/mikrotik-exporter /mikrotik-exporter
 EXPOSE 9436
+HEALTHCHECK --interval=1m --timeout=1s --retries=1 \
+    CMD wget -q --spider http://localhost:9436/live || exit 1
 ENTRYPOINT ["/mikrotik-exporter"]
