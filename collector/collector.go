@@ -16,26 +16,14 @@ import (
 var (
 	scrapeDurationMetricDescription = prometheus.NewDesc(
 		prometheus.BuildFQName(namespace, scrapePrefix, "duration_seconds"),
-		"Duration of a device scrape",
-		[]string{"device"},
-		nil,
-	)
-	scrapeSuccessMetricDescription = prometheus.NewDesc(
-		prometheus.BuildFQName(namespace, scrapePrefix, "success"),
-		"Whether a device scrape succeeded",
-		[]string{"device"},
+		"Duration of a device scrape step",
+		[]string{"device", "step", "success"},
 		nil,
 	)
 	collectorDurationMetricDescription = prometheus.NewDesc(
 		prometheus.BuildFQName(namespace, scrapePrefix, "collector_duration_seconds"),
 		"Duration of a device collector scrape",
-		[]string{"device", "collector"},
-		nil,
-	)
-	collectorSuccessMetricDescription = prometheus.NewDesc(
-		prometheus.BuildFQName(namespace, scrapePrefix, "collector_success"),
-		"Whether a device collector succeeded",
-		[]string{"device", "collector"},
+		[]string{"device", "collector", "success"},
 		nil,
 	)
 
@@ -110,6 +98,12 @@ type (
 const (
 	namespace    = "mikrotik"
 	scrapePrefix = "scrape"
+
+	stepConnect = "connect"
+	stepCollect = "collect"
+
+	resultError   = "false"
+	resultSuccess = "true"
 )
 
 func buildCollectorContext(
@@ -172,7 +166,7 @@ func NewMikrotikCollector(devices []*Device, opts ...Option) prometheus.Collecto
 // Describe - implements the prometheus.Collector interface.
 func (c *routerosCollector) Describe(ch chan<- *prometheus.Desc) {
 	ch <- scrapeDurationMetricDescription
-	ch <- scrapeSuccessMetricDescription
+	ch <- collectorDurationMetricDescription
 
 	for _, co := range c.collectors {
 		co.Describe(ch)
@@ -208,31 +202,37 @@ func (c *routerosCollector) Collect(ch chan<- prometheus.Metric) {
 }
 
 func (c *routerosCollector) collectForDevice(d *Device, ch chan<- prometheus.Metric) {
-	start := timeNowUTC()
-
-	err := c.connectAndCollect(d, ch)
-	switch err != nil {
-	case true:
+	if err := c.connectAndCollect(d, ch); err != nil {
 		log.WithFields(log.Fields{
 			"device": d.Name,
 			"error":  err,
 		}).Error("failed to collect metrics")
-		ch <- prometheus.MustNewConstMetric(scrapeSuccessMetricDescription, prometheus.GaugeValue, 0, d.Name)
-	case false:
-		ch <- prometheus.MustNewConstMetric(scrapeSuccessMetricDescription, prometheus.GaugeValue, 1, d.Name)
 	}
-
-	ch <- prometheus.MustNewConstMetric(scrapeDurationMetricDescription, prometheus.GaugeValue,
-		timeSince(start).Seconds(), d.Name,
-	)
 }
 
 func (c *routerosCollector) connectAndCollect(d *Device, ch chan<- prometheus.Metric) error {
+	startConnect := timeNowUTC()
+
 	cl, err := c.clientCreatorFunc(d)
 	if err != nil {
+		ch <- prometheus.MustNewConstMetric(
+			scrapeDurationMetricDescription,
+			prometheus.GaugeValue,
+			timeSince(startConnect).Seconds(),
+			d.Name, stepConnect, resultError,
+		)
 		return fmt.Errorf("failed to create client: %w", err)
 	}
 	defer cl.Close()
+
+	ch <- prometheus.MustNewConstMetric(
+		scrapeDurationMetricDescription,
+		prometheus.GaugeValue,
+		timeSince(startConnect).Seconds(),
+		d.Name, stepConnect, resultSuccess,
+	)
+
+	startCollect := timeNowUTC()
 
 	cl.Async()
 
@@ -248,30 +248,38 @@ func (c *routerosCollector) connectAndCollect(d *Device, ch chan<- prometheus.Me
 
 			start := timeNowUTC()
 
-			err = co.Collect(ctx)
-			switch err != nil {
-			case true:
+			if err = co.Collect(ctx); err != nil {
 				log.WithFields(log.Fields{
 					"collector": co.Name(),
 					"device":    d.Name,
 					"error":     err,
 				}).Error("failed to collect feature metrics")
-				ch <- prometheus.MustNewConstMetric(collectorSuccessMetricDescription, prometheus.GaugeValue, 0,
-					d.Name, co.Name(),
+				ch <- prometheus.MustNewConstMetric(
+					collectorDurationMetricDescription,
+					prometheus.GaugeValue,
+					timeSince(start).Seconds(),
+					d.Name, co.Name(), resultError,
 				)
-			case false:
-				ch <- prometheus.MustNewConstMetric(collectorSuccessMetricDescription, prometheus.GaugeValue, 1,
-					d.Name, co.Name(),
-				)
+				return
 			}
 
-			ch <- prometheus.MustNewConstMetric(collectorDurationMetricDescription, prometheus.GaugeValue,
-				timeSince(start).Seconds(), d.Name, co.Name(),
+			ch <- prometheus.MustNewConstMetric(
+				collectorDurationMetricDescription,
+				prometheus.GaugeValue,
+				timeSince(start).Seconds(),
+				d.Name, co.Name(), resultSuccess,
 			)
 		}(co)
 	}
 
 	wg.Wait()
+
+	ch <- prometheus.MustNewConstMetric(
+		scrapeDurationMetricDescription,
+		prometheus.GaugeValue,
+		timeSince(startCollect).Seconds(),
+		d.Name, stepCollect, resultSuccess,
+	)
 
 	return nil
 }

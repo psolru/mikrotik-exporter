@@ -91,8 +91,18 @@ func Test_collector_Describe(t *testing.T) {
 	close(describeChan)
 	<-doneChan
 	r.ElementsMatch([]*prometheus.Desc{
-		scrapeDurationMetricDescription,
-		scrapeSuccessMetricDescription,
+		prometheus.NewDesc(
+			prometheus.BuildFQName(namespace, scrapePrefix, "duration_seconds"),
+			"Duration of a device scrape step",
+			[]string{"device", "step", "success"},
+			nil,
+		),
+		prometheus.NewDesc(
+			prometheus.BuildFQName(namespace, scrapePrefix, "collector_duration_seconds"),
+			"Duration of a device collector scrape",
+			[]string{"device", "collector", "success"},
+			nil,
+		),
 	}, gotDescriptions)
 }
 
@@ -169,10 +179,58 @@ func Test_collector_Collect(t *testing.T) {
 				routerOSClientMock.CloseMock.Return()
 			},
 			want: []prometheus.Metric{
-				prometheus.MustNewConstMetric(scrapeSuccessMetricDescription, prometheus.GaugeValue, 1, "test1"),
-				prometheus.MustNewConstMetric(scrapeSuccessMetricDescription, prometheus.GaugeValue, 1, "test2"),
-				prometheus.MustNewConstMetric(scrapeDurationMetricDescription, prometheus.GaugeValue, 2, "test1"),
-				prometheus.MustNewConstMetric(scrapeDurationMetricDescription, prometheus.GaugeValue, 2, "test2"),
+				prometheus.MustNewConstMetric(
+					prometheus.NewDesc(
+						prometheus.BuildFQName(namespace, scrapePrefix, "duration_seconds"),
+						"Duration of a device scrape step",
+						[]string{"device", "step", "success"},
+						nil,
+					),
+					prometheus.GaugeValue,
+					2.0,
+					"test1",
+					"connect",
+					"true",
+				),
+				prometheus.MustNewConstMetric(
+					prometheus.NewDesc(
+						prometheus.BuildFQName(namespace, scrapePrefix, "duration_seconds"),
+						"Duration of a device scrape step",
+						[]string{"device", "step", "success"},
+						nil,
+					),
+					prometheus.GaugeValue,
+					2.0,
+					"test1",
+					"collect",
+					"true",
+				),
+				prometheus.MustNewConstMetric(
+					prometheus.NewDesc(
+						prometheus.BuildFQName(namespace, scrapePrefix, "duration_seconds"),
+						"Duration of a device scrape step",
+						[]string{"device", "step", "success"},
+						nil,
+					),
+					prometheus.GaugeValue,
+					2.0,
+					"test2",
+					"connect",
+					"true",
+				),
+				prometheus.MustNewConstMetric(
+					prometheus.NewDesc(
+						prometheus.BuildFQName(namespace, scrapePrefix, "duration_seconds"),
+						"Duration of a device scrape step",
+						[]string{"device", "step", "success"},
+						nil,
+					),
+					prometheus.GaugeValue,
+					2.0,
+					"test2",
+					"collect",
+					"true",
+				),
 			},
 		},
 		{
@@ -196,14 +254,84 @@ func Test_collector_Collect(t *testing.T) {
 				routerOSClientMock.CloseMock.Return()
 			},
 			want: []prometheus.Metric{
-				prometheus.MustNewConstMetric(scrapeSuccessMetricDescription, prometheus.GaugeValue, 1, "test1"),
-				prometheus.MustNewConstMetric(scrapeDurationMetricDescription, prometheus.GaugeValue, 2, "test1"),
-				prometheus.MustNewConstMetric(scrapeSuccessMetricDescription, prometheus.GaugeValue, 1, "test2"),
-				prometheus.MustNewConstMetric(scrapeDurationMetricDescription, prometheus.GaugeValue, 2, "test2"),
-				prometheus.MustNewConstMetric(collectorSuccessMetricDescription, prometheus.GaugeValue, 1, "test1", "testCollector"),
-				prometheus.MustNewConstMetric(collectorDurationMetricDescription, prometheus.GaugeValue, 2, "test1", "testCollector"),
-				prometheus.MustNewConstMetric(collectorSuccessMetricDescription, prometheus.GaugeValue, 1, "test2", "testCollector"),
-				prometheus.MustNewConstMetric(collectorDurationMetricDescription, prometheus.GaugeValue, 2, "test2", "testCollector"),
+				prometheus.MustNewConstMetric(
+					prometheus.NewDesc(
+						prometheus.BuildFQName(namespace, scrapePrefix, "duration_seconds"),
+						"Duration of a device scrape step",
+						[]string{"device", "step", "success"},
+						nil,
+					),
+					prometheus.GaugeValue,
+					2.0,
+					"test1",
+					"connect",
+					"true",
+				),
+				prometheus.MustNewConstMetric(
+					prometheus.NewDesc(
+						prometheus.BuildFQName(namespace, scrapePrefix, "duration_seconds"),
+						"Duration of a device scrape step",
+						[]string{"device", "step", "success"},
+						nil,
+					),
+					prometheus.GaugeValue,
+					2.0,
+					"test1",
+					"collect",
+					"true",
+				),
+				prometheus.MustNewConstMetric(
+					prometheus.NewDesc(
+						prometheus.BuildFQName(namespace, scrapePrefix, "duration_seconds"),
+						"Duration of a device scrape step",
+						[]string{"device", "step", "success"},
+						nil,
+					),
+					prometheus.GaugeValue,
+					2.0,
+					"test2",
+					"connect",
+					"true",
+				),
+				prometheus.MustNewConstMetric(
+					prometheus.NewDesc(
+						prometheus.BuildFQName(namespace, scrapePrefix, "duration_seconds"),
+						"Duration of a device scrape step",
+						[]string{"device", "step", "success"},
+						nil,
+					),
+					prometheus.GaugeValue,
+					2.0,
+					"test2",
+					"collect",
+					"true",
+				),
+				prometheus.MustNewConstMetric(
+					prometheus.NewDesc(
+						prometheus.BuildFQName(namespace, scrapePrefix, "collector_duration_seconds"),
+						"Duration of a device collector scrape",
+						[]string{"device", "collector", "success"},
+						nil,
+					),
+					prometheus.GaugeValue,
+					2.0,
+					"test1",
+					"testCollector",
+					"true",
+				),
+				prometheus.MustNewConstMetric(
+					prometheus.NewDesc(
+						prometheus.BuildFQName(namespace, scrapePrefix, "collector_duration_seconds"),
+						"Duration of a device collector scrape",
+						[]string{"device", "collector", "success"},
+						nil,
+					),
+					prometheus.GaugeValue,
+					2.0,
+					"test2",
+					"testCollector",
+					"true",
+				),
 			},
 		},
 		{
@@ -240,14 +368,84 @@ func Test_collector_Collect(t *testing.T) {
 				routerOSClientMock.CloseMock.Return()
 			},
 			want: []prometheus.Metric{
-				prometheus.MustNewConstMetric(scrapeSuccessMetricDescription, prometheus.GaugeValue, 1, "test1"),
-				prometheus.MustNewConstMetric(scrapeDurationMetricDescription, prometheus.GaugeValue, 2, "test1"),
-				prometheus.MustNewConstMetric(scrapeSuccessMetricDescription, prometheus.GaugeValue, 1, "test3"),
-				prometheus.MustNewConstMetric(scrapeDurationMetricDescription, prometheus.GaugeValue, 2, "test3"),
-				prometheus.MustNewConstMetric(collectorSuccessMetricDescription, prometheus.GaugeValue, 1, "test1", "testCollector"),
-				prometheus.MustNewConstMetric(collectorDurationMetricDescription, prometheus.GaugeValue, 2, "test1", "testCollector"),
-				prometheus.MustNewConstMetric(collectorSuccessMetricDescription, prometheus.GaugeValue, 0, "test3", "testCollector"),
-				prometheus.MustNewConstMetric(collectorDurationMetricDescription, prometheus.GaugeValue, 2, "test3", "testCollector"),
+				prometheus.MustNewConstMetric(
+					prometheus.NewDesc(
+						prometheus.BuildFQName(namespace, scrapePrefix, "duration_seconds"),
+						"Duration of a device scrape step",
+						[]string{"device", "step", "success"},
+						nil,
+					),
+					prometheus.GaugeValue,
+					2.0,
+					"test1",
+					"connect",
+					"true",
+				),
+				prometheus.MustNewConstMetric(
+					prometheus.NewDesc(
+						prometheus.BuildFQName(namespace, scrapePrefix, "duration_seconds"),
+						"Duration of a device scrape step",
+						[]string{"device", "step", "success"},
+						nil,
+					),
+					prometheus.GaugeValue,
+					2.0,
+					"test1",
+					"collect",
+					"true",
+				),
+				prometheus.MustNewConstMetric(
+					prometheus.NewDesc(
+						prometheus.BuildFQName(namespace, scrapePrefix, "duration_seconds"),
+						"Duration of a device scrape step",
+						[]string{"device", "step", "success"},
+						nil,
+					),
+					prometheus.GaugeValue,
+					2.0,
+					"test3",
+					"connect",
+					"true",
+				),
+				prometheus.MustNewConstMetric(
+					prometheus.NewDesc(
+						prometheus.BuildFQName(namespace, scrapePrefix, "duration_seconds"),
+						"Duration of a device scrape step",
+						[]string{"device", "step", "success"},
+						nil,
+					),
+					prometheus.GaugeValue,
+					2.0,
+					"test3",
+					"collect",
+					"true",
+				),
+				prometheus.MustNewConstMetric(
+					prometheus.NewDesc(
+						prometheus.BuildFQName(namespace, scrapePrefix, "collector_duration_seconds"),
+						"Duration of a device collector scrape",
+						[]string{"device", "collector", "success"},
+						nil,
+					),
+					prometheus.GaugeValue,
+					2.0,
+					"test1",
+					"testCollector",
+					"true",
+				),
+				prometheus.MustNewConstMetric(
+					prometheus.NewDesc(
+						prometheus.BuildFQName(namespace, scrapePrefix, "collector_duration_seconds"),
+						"Duration of a device collector scrape",
+						[]string{"device", "collector", "success"},
+						nil,
+					),
+					prometheus.GaugeValue,
+					2.0,
+					"test3",
+					"testCollector",
+					"false",
+				),
 			},
 		},
 		{
@@ -270,8 +468,32 @@ func Test_collector_Collect(t *testing.T) {
 				routerOSClientMock.CloseMock.Return()
 			},
 			want: []prometheus.Metric{
-				prometheus.MustNewConstMetric(scrapeSuccessMetricDescription, prometheus.GaugeValue, 1, "test1"),
-				prometheus.MustNewConstMetric(scrapeDurationMetricDescription, prometheus.GaugeValue, 2, "test1"),
+				prometheus.MustNewConstMetric(
+					prometheus.NewDesc(
+						prometheus.BuildFQName(namespace, scrapePrefix, "duration_seconds"),
+						"Duration of a device scrape step",
+						[]string{"device", "step", "success"},
+						nil,
+					),
+					prometheus.GaugeValue,
+					2.0,
+					"test1",
+					"connect",
+					"true",
+				),
+				prometheus.MustNewConstMetric(
+					prometheus.NewDesc(
+						prometheus.BuildFQName(namespace, scrapePrefix, "duration_seconds"),
+						"Duration of a device scrape step",
+						[]string{"device", "step", "success"},
+						nil,
+					),
+					prometheus.GaugeValue,
+					2.0,
+					"test1",
+					"collect",
+					"true",
+				),
 			},
 		},
 		{
@@ -287,8 +509,19 @@ func Test_collector_Collect(t *testing.T) {
 			},
 			setMocks: func() {},
 			want: []prometheus.Metric{
-				prometheus.MustNewConstMetric(scrapeSuccessMetricDescription, prometheus.GaugeValue, 0, "test1"),
-				prometheus.MustNewConstMetric(scrapeDurationMetricDescription, prometheus.GaugeValue, 2, "test1"),
+				prometheus.MustNewConstMetric(
+					prometheus.NewDesc(
+						prometheus.BuildFQName(namespace, scrapePrefix, "duration_seconds"),
+						"Duration of a device scrape step",
+						[]string{"device", "step", "success"},
+						nil,
+					),
+					prometheus.GaugeValue,
+					2.0,
+					"test1",
+					"connect",
+					"false",
+				),
 			},
 		},
 	}
