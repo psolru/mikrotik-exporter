@@ -5,18 +5,16 @@ import (
 	"strings"
 
 	"github.com/prometheus/client_golang/prometheus"
-	log "github.com/sirupsen/logrus"
 	"gopkg.in/routeros.v2/proto"
 
 	"github.com/ogi4i/mikrotik-exporter/collector/context"
 	"github.com/ogi4i/mikrotik-exporter/metrics"
-	"github.com/ogi4i/mikrotik-exporter/parsers"
 )
 
 var (
-	properties        = []string{"bridge", "mac-address", "on-interface", "vid", "dynamic", "local", "external", "age"}
-	metricDescription = metrics.BuildMetricDescription(prefix, "age", "bridge host age in seconds",
-		[]string{"name", "address", "bridge", "mac_address", "on_interface", "vid", "dynamic", "local", "external"},
+	properties        = []string{"bridge", "mac-address", "on-interface", "dynamic", "local", "external"}
+	metricDescription = metrics.BuildMetricDescription(prefix, "status", "bridge host status",
+		[]string{"name", "address", "bridge", "mac_address", "on_interface", "dynamic", "local", "external"},
 	)
 )
 
@@ -63,25 +61,9 @@ func (c *bridgeHostsCollector) fetch(ctx *context.Context) ([]*proto.Sentence, e
 }
 
 func (c *bridgeHostsCollector) collectForStat(re *proto.Sentence, ctx *context.Context) {
-	value := re.Map["age"]
-	if len(value) == 0 {
-		return
-	}
-
-	v, err := parsers.ParseDuration(value)
-	if err != nil {
-		log.WithFields(log.Fields{
-			"collector": c.Name(),
-			"device":    ctx.DeviceName,
-			"value":     value,
-			"error":     err,
-		}).Error("failed to parse bridge host age metric value")
-		return
-	}
-
-	ctx.MetricsChan <- prometheus.MustNewConstMetric(metricDescription, prometheus.GaugeValue, v,
+	ctx.MetricsChan <- prometheus.MustNewConstMetric(metricDescription, prometheus.GaugeValue, 1.0,
 		ctx.DeviceName, ctx.DeviceAddress,
-		re.Map["bridge"], re.Map["mac-address"], re.Map["on-interface"], re.Map["vid"], re.Map["dynamic"],
+		re.Map["bridge"], re.Map["mac-address"], re.Map["on-interface"], re.Map["dynamic"],
 		re.Map["local"], re.Map["external"],
 	)
 }

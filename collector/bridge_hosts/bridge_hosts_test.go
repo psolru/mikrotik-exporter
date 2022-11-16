@@ -42,8 +42,8 @@ func Test_bridgeHostsCollector_Describe(t *testing.T) {
 
 	<-done
 	r.ElementsMatch([]*prometheus.Desc{
-		metrics.BuildMetricDescription(prefix, "age", "bridge host age in seconds",
-			[]string{"name", "address", "bridge", "mac_address", "on_interface", "vid", "dynamic", "local", "external"},
+		metrics.BuildMetricDescription(prefix, "status", "bridge host status",
+			[]string{"name", "address", "bridge", "mac_address", "on_interface", "dynamic", "local", "external"},
 		),
 	}, got)
 }
@@ -71,7 +71,7 @@ func Test_bridgeHostsCollector_Collect(t *testing.T) {
 					r.Equal([]string{
 						"/interface/bridge/host/print",
 						"?disabled=false",
-						"=.proplist=bridge,mac-address,on-interface,vid,dynamic,local,external,age",
+						"=.proplist=bridge,mac-address,on-interface,dynamic,local,external",
 					}, sentence)
 				}).Return(&routeros.Reply{
 					Re: []*proto.Sentence{
@@ -80,11 +80,9 @@ func Test_bridgeHostsCollector_Collect(t *testing.T) {
 								"bridge":       "bridge",
 								"mac-address":  "mac-address",
 								"on-interface": "ether1",
-								"vid":          "",
 								"dynamic":      "true",
 								"local":        "false",
 								"external":     "true",
-								"age":          "1m55s",
 							},
 						},
 					},
@@ -92,10 +90,10 @@ func Test_bridgeHostsCollector_Collect(t *testing.T) {
 			},
 			want: []prometheus.Metric{
 				prometheus.MustNewConstMetric(
-					metrics.BuildMetricDescription(prefix, "age", "bridge host age in seconds",
-						[]string{"name", "address", "bridge", "mac_address", "on_interface", "vid", "dynamic", "local", "external"},
+					metrics.BuildMetricDescription(prefix, "status", "bridge host status",
+						[]string{"name", "address", "bridge", "mac_address", "on_interface", "dynamic", "local", "external"},
 					),
-					prometheus.GaugeValue, 115, "device", "address", "bridge", "mac-address", "ether1", "", "true", "false", "true",
+					prometheus.GaugeValue, 1.0, "device", "address", "bridge", "mac-address", "ether1", "true", "false", "true",
 				),
 			},
 		},
@@ -106,39 +104,11 @@ func Test_bridgeHostsCollector_Collect(t *testing.T) {
 					r.Equal([]string{
 						"/interface/bridge/host/print",
 						"?disabled=false",
-						"=.proplist=bridge,mac-address,on-interface,vid,dynamic,local,external,age",
+						"=.proplist=bridge,mac-address,on-interface,dynamic,local,external",
 					}, sentence)
 				}).Return(nil, errors.New("some fetch error"))
 			},
 			errWant: "failed to fetch bridge hosts metrics: some fetch error",
-		},
-		{
-			name: "parse error",
-			setMocks: func() {
-				routerOSClientMock.RunMock.Inspect(func(sentence ...string) {
-					r.Equal([]string{
-						"/interface/bridge/host/print",
-						"?disabled=false",
-						"=.proplist=bridge,mac-address,on-interface,vid,dynamic,local,external,age",
-					}, sentence)
-				}).Return(&routeros.Reply{
-					Re: []*proto.Sentence{
-						{
-							Map: map[string]string{
-								"bridge":       "bridge",
-								"mac-address":  "mac-address",
-								"on-interface": "ether1",
-								"vid":          "",
-								"dynamic":      "true",
-								"local":        "false",
-								"external":     "true",
-								"age":          "1m1m55s",
-							},
-						},
-					},
-				}, nil)
-			},
-			want: []prometheus.Metric{},
 		},
 	}
 
