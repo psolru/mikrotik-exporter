@@ -15,8 +15,33 @@ A Prometheus Exporter for Mikrotik devices. Can be configured to collect metrics
 devices. Single device monitoring can be configured all on the command line. Multiple devices require a configuration
 file. A user will be required that has read-only access to the device configuration via the API.
 
-Currently the exporter collects metrics for interfaces and system resources. Others can be added as long as published
-via the API.
+Because of some breaking changes in the ROS API with ROS7 currently this exporter mainly aims to be compatible with
+ROS7.
+Some of the metrics might not work on ROS6.
+
+Currently the exporter supports collecting these groups of metrics:
+
+- interface
+- resource
+- bgp session
+- dhcp lease
+- dhcp ipv6 lease
+- firmware
+- health
+- ip routes
+- ethernet
+- poe
+- ip pool
+- sfp
+- wlan stations
+- capsman
+- wlan
+- ipsec
+- ospf neighbors
+- lte
+- netwatch
+- conntrack
+- bridge hosts
 
 #### Mikrotik Config
 

@@ -42,12 +42,11 @@ func Test_bgpCollector_Describe(t *testing.T) {
 
 	<-done
 	r.ElementsMatch([]*prometheus.Desc{
-		metrics.BuildMetricDescription(prefix, "state", "bgp session state (up = 1)", labelNames),
-		metrics.BuildMetricDescription(prefix, "prefix_count", "number of prefixes per session", labelNames),
-		metrics.BuildMetricDescription(prefix, "updates_sent", "number of bgp updates sent per session", labelNames),
-		metrics.BuildMetricDescription(prefix, "updates_received", "number of bgp updates received per session", labelNames),
-		metrics.BuildMetricDescription(prefix, "withdrawn_sent", "number of bgp withdrawns sent per session", labelNames),
-		metrics.BuildMetricDescription(prefix, "withdrawn_received", "number of bgp withdrawns received per session", labelNames),
+		metrics.BuildMetricDescription(prefix, "established", "bgp session established (up = 1)", labelNames),
+		metrics.BuildMetricDescription(prefix, "remote_messages", "number of bgp messages received per session", labelNames),
+		metrics.BuildMetricDescription(prefix, "local_messages", "number of bgp messages sent per session", labelNames),
+		metrics.BuildMetricDescription(prefix, "remote_bytes", "number of bytes received per session", labelNames),
+		metrics.BuildMetricDescription(prefix, "local_bytes", "number of bytes sent per session", labelNames),
 	}, got)
 }
 
@@ -72,21 +71,21 @@ func Test_bgpCollector_Collect(t *testing.T) {
 			setMocks: func() {
 				routerOSClientMock.RunMock.Inspect(func(sentence ...string) {
 					r.Equal([]string{
-						"/routing/bgp/peer/print",
-						"=.proplist=name,remote-as,state,prefix-count,updates-sent,updates-received,withdrawn-sent,withdrawn-received",
+						"/routing/bgp/session/print",
+						"=.proplist=name,remote.as,remote.address,established,remote.messages,local.messages,remote.bytes,local.bytes",
 					}, sentence)
 				}).Return(&routeros.Reply{
 					Re: []*proto.Sentence{
 						{
 							Map: map[string]string{
-								"name":               "session",
-								"remote-as":          "65000",
-								"state":              "established",
-								"prefix-count":       "111",
-								"updates-sent":       "11",
-								"updates-received":   "21",
-								"withdrawn-sent":     "1",
-								"withdrawn-received": "2",
+								"name":            "session",
+								"remote.as":       "65000",
+								"remote.address":  "1.1.1.1",
+								"established":     "true",
+								"remote.messages": "111",
+								"local.messages":  "11",
+								"remote.bytes":    "222",
+								"local.bytes":     "21",
 							},
 						},
 					},
@@ -94,28 +93,24 @@ func Test_bgpCollector_Collect(t *testing.T) {
 			},
 			want: []prometheus.Metric{
 				prometheus.MustNewConstMetric(
-					metrics.BuildMetricDescription(prefix, "state", "bgp session state (up = 1)", labelNames),
-					prometheus.GaugeValue, 1, "device", "address", "session", "65000",
+					metrics.BuildMetricDescription(prefix, "established", "bgp session established (up = 1)", labelNames),
+					prometheus.GaugeValue, 1, "device", "address", "session", "65000", "1.1.1.1",
 				),
 				prometheus.MustNewConstMetric(
-					metrics.BuildMetricDescription(prefix, "prefix_count", "number of prefixes per session", labelNames),
-					prometheus.GaugeValue, 111, "device", "address", "session", "65000",
+					metrics.BuildMetricDescription(prefix, "remote_messages", "number of bgp messages received per session", labelNames),
+					prometheus.CounterValue, 111, "device", "address", "session", "65000", "1.1.1.1",
 				),
 				prometheus.MustNewConstMetric(
-					metrics.BuildMetricDescription(prefix, "updates_sent", "number of bgp updates sent per session", labelNames),
-					prometheus.GaugeValue, 11, "device", "address", "session", "65000",
+					metrics.BuildMetricDescription(prefix, "local_messages", "number of bgp messages sent per session", labelNames),
+					prometheus.CounterValue, 11, "device", "address", "session", "65000", "1.1.1.1",
 				),
 				prometheus.MustNewConstMetric(
-					metrics.BuildMetricDescription(prefix, "updates_received", "number of bgp updates received per session", labelNames),
-					prometheus.GaugeValue, 21, "device", "address", "session", "65000",
+					metrics.BuildMetricDescription(prefix, "remote_bytes", "number of bytes received per session", labelNames),
+					prometheus.CounterValue, 222, "device", "address", "session", "65000", "1.1.1.1",
 				),
 				prometheus.MustNewConstMetric(
-					metrics.BuildMetricDescription(prefix, "withdrawn_sent", "number of bgp withdrawns sent per session", labelNames),
-					prometheus.GaugeValue, 1, "device", "address", "session", "65000",
-				),
-				prometheus.MustNewConstMetric(
-					metrics.BuildMetricDescription(prefix, "withdrawn_received", "number of bgp withdrawns received per session", labelNames),
-					prometheus.GaugeValue, 2, "device", "address", "session", "65000",
+					metrics.BuildMetricDescription(prefix, "local_bytes", "number of bytes sent per session", labelNames),
+					prometheus.CounterValue, 21, "device", "address", "session", "65000", "1.1.1.1",
 				),
 			},
 		},
@@ -124,8 +119,8 @@ func Test_bgpCollector_Collect(t *testing.T) {
 			setMocks: func() {
 				routerOSClientMock.RunMock.Inspect(func(sentence ...string) {
 					r.Equal([]string{
-						"/routing/bgp/peer/print",
-						"=.proplist=name,remote-as,state,prefix-count,updates-sent,updates-received,withdrawn-sent,withdrawn-received",
+						"/routing/bgp/session/print",
+						"=.proplist=name,remote.as,remote.address,established,remote.messages,local.messages,remote.bytes,local.bytes",
 					}, sentence)
 				}).Return(nil, errors.New("some fetch error"))
 			},
@@ -136,21 +131,21 @@ func Test_bgpCollector_Collect(t *testing.T) {
 			setMocks: func() {
 				routerOSClientMock.RunMock.Inspect(func(sentence ...string) {
 					r.Equal([]string{
-						"/routing/bgp/peer/print",
-						"=.proplist=name,remote-as,state,prefix-count,updates-sent,updates-received,withdrawn-sent,withdrawn-received",
+						"/routing/bgp/session/print",
+						"=.proplist=name,remote.as,remote.address,established,remote.messages,local.messages,remote.bytes,local.bytes",
 					}, sentence)
 				}).Return(&routeros.Reply{
 					Re: []*proto.Sentence{
 						{
 							Map: map[string]string{
-								"name":               "session",
-								"remote-as":          "65000",
-								"state":              "other-state",
-								"prefix-count":       "a111",
-								"updates-sent":       "11",
-								"updates-received":   "21",
-								"withdrawn-sent":     "1",
-								"withdrawn-received": "2",
+								"name":            "session",
+								"remote.as":       "65000",
+								"remote.address":  "1.1.1.1",
+								"established":     "true",
+								"remote.messages": "d111",
+								"local.messages":  "11",
+								"remote.bytes":    "222",
+								"local.bytes":     "21",
 							},
 						},
 					},
@@ -158,24 +153,20 @@ func Test_bgpCollector_Collect(t *testing.T) {
 			},
 			want: []prometheus.Metric{
 				prometheus.MustNewConstMetric(
-					metrics.BuildMetricDescription(prefix, "state", "bgp session state (up = 1)", labelNames),
-					prometheus.GaugeValue, 0, "device", "address", "session", "65000",
+					metrics.BuildMetricDescription(prefix, "established", "bgp session established (up = 1)", labelNames),
+					prometheus.GaugeValue, 1, "device", "address", "session", "65000", "1.1.1.1",
 				),
 				prometheus.MustNewConstMetric(
-					metrics.BuildMetricDescription(prefix, "updates_sent", "number of bgp updates sent per session", labelNames),
-					prometheus.GaugeValue, 11, "device", "address", "session", "65000",
+					metrics.BuildMetricDescription(prefix, "local_messages", "number of bgp messages sent per session", labelNames),
+					prometheus.CounterValue, 11, "device", "address", "session", "65000", "1.1.1.1",
 				),
 				prometheus.MustNewConstMetric(
-					metrics.BuildMetricDescription(prefix, "updates_received", "number of bgp updates received per session", labelNames),
-					prometheus.GaugeValue, 21, "device", "address", "session", "65000",
+					metrics.BuildMetricDescription(prefix, "remote_bytes", "number of bytes received per session", labelNames),
+					prometheus.CounterValue, 222, "device", "address", "session", "65000", "1.1.1.1",
 				),
 				prometheus.MustNewConstMetric(
-					metrics.BuildMetricDescription(prefix, "withdrawn_sent", "number of bgp withdrawns sent per session", labelNames),
-					prometheus.GaugeValue, 1, "device", "address", "session", "65000",
-				),
-				prometheus.MustNewConstMetric(
-					metrics.BuildMetricDescription(prefix, "withdrawn_received", "number of bgp withdrawns received per session", labelNames),
-					prometheus.GaugeValue, 2, "device", "address", "session", "65000",
+					metrics.BuildMetricDescription(prefix, "local_bytes", "number of bytes sent per session", labelNames),
+					prometheus.CounterValue, 21, "device", "address", "session", "65000", "1.1.1.1",
 				),
 			},
 		},

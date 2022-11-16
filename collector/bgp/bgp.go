@@ -14,15 +14,29 @@ import (
 )
 
 var (
-	properties         = []string{"name", "remote-as", "state", "prefix-count", "updates-sent", "updates-received", "withdrawn-sent", "withdrawn-received"}
-	labelNames         = []string{"name", "address", "session", "asn"}
-	metricDescriptions = map[string]*prometheus.Desc{
-		"state":              metrics.BuildMetricDescription(prefix, "state", "bgp session state (up = 1)", labelNames),
-		"prefix-count":       metrics.BuildMetricDescription(prefix, "prefix_count", "number of prefixes per session", labelNames),
-		"updates-sent":       metrics.BuildMetricDescription(prefix, "updates_sent", "number of bgp updates sent per session", labelNames),
-		"updates-received":   metrics.BuildMetricDescription(prefix, "updates_received", "number of bgp updates received per session", labelNames),
-		"withdrawn-sent":     metrics.BuildMetricDescription(prefix, "withdrawn_sent", "number of bgp withdrawns sent per session", labelNames),
-		"withdrawn-received": metrics.BuildMetricDescription(prefix, "withdrawn_received", "number of bgp withdrawns received per session", labelNames),
+	properties         = []string{"name", "remote.as", "remote.address", "established", "remote.messages", "local.messages", "remote.bytes", "local.bytes"}
+	labelNames         = []string{"name", "address", "session", "asn", "remote_address"}
+	metricDescriptions = map[string]*metrics.MetricDescription{
+		"established": {
+			Desc:      metrics.BuildMetricDescription(prefix, "established", "bgp session established (up = 1)", labelNames),
+			ValueType: prometheus.GaugeValue,
+		},
+		"remote.messages": {
+			Desc:      metrics.BuildMetricDescription(prefix, "remote_messages", "number of bgp messages received per session", labelNames),
+			ValueType: prometheus.CounterValue,
+		},
+		"local.messages": {
+			Desc:      metrics.BuildMetricDescription(prefix, "local_messages", "number of bgp messages sent per session", labelNames),
+			ValueType: prometheus.CounterValue,
+		},
+		"remote.bytes": {
+			Desc:      metrics.BuildMetricDescription(prefix, "remote_bytes", "number of bytes received per session", labelNames),
+			ValueType: prometheus.CounterValue,
+		},
+		"local.bytes": {
+			Desc:      metrics.BuildMetricDescription(prefix, "local_bytes", "number of bytes sent per session", labelNames),
+			ValueType: prometheus.CounterValue,
+		},
 	}
 )
 
@@ -40,7 +54,7 @@ func (c *bgpCollector) Name() string {
 
 func (c *bgpCollector) Describe(ch chan<- *prometheus.Desc) {
 	for _, d := range metricDescriptions {
-		ch <- d
+		ch <- d.Desc
 	}
 }
 
@@ -59,7 +73,7 @@ func (c *bgpCollector) Collect(ctx *context.Context) error {
 
 func (c *bgpCollector) fetch(ctx *context.Context) ([]*proto.Sentence, error) {
 	reply, err := ctx.RouterOSClient.Run(
-		"/routing/bgp/peer/print",
+		"/routing/bgp/session/print",
 		"=.proplist="+strings.Join(properties, ","),
 	)
 	if err != nil {
@@ -88,8 +102,8 @@ func (c *bgpCollector) collectMetricForProperty(property string, re *proto.Sente
 		err error
 	)
 	switch property {
-	case "state":
-		if value == "established" {
+	case "established":
+		if value == "true" {
 			v = 1
 		}
 	default:
@@ -107,5 +121,6 @@ func (c *bgpCollector) collectMetricForProperty(property string, re *proto.Sente
 		return
 	}
 
-	ctx.MetricsChan <- prometheus.MustNewConstMetric(metricDescriptions[property], prometheus.GaugeValue, v, ctx.DeviceName, ctx.DeviceAddress, session, re.Map["remote-as"])
+	desc := metricDescriptions[property]
+	ctx.MetricsChan <- prometheus.MustNewConstMetric(desc.Desc, desc.ValueType, v, ctx.DeviceName, ctx.DeviceAddress, session, re.Map["remote.as"], re.Map["remote.address"])
 }
