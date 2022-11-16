@@ -67,10 +67,7 @@ func Test_healthCollector_Collect(t *testing.T) {
 		{
 			name: "success",
 			setMocks: func() {
-				routerOSClientMock.RunMock.When([]string{
-					"/system/health/print",
-					"=.proplist=voltage,temperature,cpu-temperature",
-				}...).Then(&routeros.Reply{
+				routerOSClientMock.RunMock.When([]string{"/system/health/print"}...).Then(&routeros.Reply{
 					Re: []*proto.Sentence{
 						{
 							Map: map[string]string{
@@ -98,13 +95,31 @@ func Test_healthCollector_Collect(t *testing.T) {
 			},
 		},
 		{
+			name: "success_ros7",
+			setMocks: func() {
+				routerOSClientMock.RunMock.When([]string{"/system/health/print"}...).Then(&routeros.Reply{
+					Re: []*proto.Sentence{
+						{
+							Map: map[string]string{
+								"name":  "cpu-temperature",
+								"value": "40",
+							},
+						},
+					},
+				}, nil)
+			},
+			want: []prometheus.Metric{
+				prometheus.MustNewConstMetric(
+					metrics.BuildMetricDescription(prefix, "cpu_temperature", "cpu temperature in degrees celsius", labelNames),
+					prometheus.GaugeValue, 40, "device", "address",
+				),
+			},
+		},
+		{
 			name: "fetch error",
 			setMocks: func() {
 				routerOSClientMock.RunMock.Inspect(func(sentence ...string) {
-					r.Equal([]string{
-						"/system/health/print",
-						"=.proplist=voltage,temperature,cpu-temperature",
-					}, sentence)
+					r.Equal([]string{"/system/health/print"}, sentence)
 				}).Return(nil, errors.New("some fetch error"))
 			},
 			errWant: "failed to fetch system health: some fetch error",
@@ -112,10 +127,7 @@ func Test_healthCollector_Collect(t *testing.T) {
 		{
 			name: "parse error",
 			setMocks: func() {
-				routerOSClientMock.RunMock.When([]string{
-					"/system/health/print",
-					"=.proplist=voltage,temperature,cpu-temperature",
-				}...).Then(&routeros.Reply{
+				routerOSClientMock.RunMock.When([]string{"/system/health/print"}...).Then(&routeros.Reply{
 					Re: []*proto.Sentence{
 						{
 							Map: map[string]string{

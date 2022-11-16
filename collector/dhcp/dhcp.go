@@ -2,6 +2,7 @@ package dhcp
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -79,7 +80,13 @@ func (c *dhcpLeaseCollector) collectMetric(ctx *context.Context, re *proto.Sente
 		return
 	}
 
-	metric, err := prometheus.NewConstMetric(metricDescription, prometheus.GaugeValue, v, ctx.DeviceName, ctx.DeviceAddress, re.Map["active-mac-address"], re.Map["server"], re.Map["status"], re.Map["active-address"], re.Map["host-name"])
+	metric, err := prometheus.NewConstMetric(metricDescription, prometheus.GaugeValue, v, ctx.DeviceName, ctx.DeviceAddress,
+		re.Map["active-mac-address"],
+		re.Map["server"],
+		re.Map["status"],
+		re.Map["active-address"],
+		strconv.QuoteToASCII(re.Map["host-name"]), // QuoteToASCII because of broken DHCP clients
+	)
 	if err != nil {
 		log.WithFields(log.Fields{
 			"device": ctx.DeviceName,

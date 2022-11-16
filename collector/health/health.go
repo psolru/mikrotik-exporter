@@ -3,7 +3,6 @@ package health
 import (
 	"fmt"
 	"strconv"
-	"strings"
 
 	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
@@ -14,7 +13,6 @@ import (
 )
 
 var (
-	properties         = []string{"voltage", "temperature", "cpu-temperature"}
 	labelNames         = []string{"name", "address"}
 	metricDescriptions = map[string]*prometheus.Desc{
 		"voltage":         metrics.BuildMetricDescription(prefix, "voltage", "input voltage to routeros board in volts", labelNames),
@@ -48,17 +46,18 @@ func (c *healthCollector) Collect(ctx *context.Context) error {
 	}
 
 	for _, re := range stats {
-		c.collectForStat(re, ctx)
+		if metric, ok := re.Map["name"]; ok {
+			c.collectMetricForProperty(metric, re, ctx)
+		} else {
+			c.collectForStat(re, ctx)
+		}
 	}
 
 	return nil
 }
 
 func (c *healthCollector) fetch(ctx *context.Context) ([]*proto.Sentence, error) {
-	reply, err := ctx.RouterOSClient.Run(
-		"/system/health/print",
-		"=.proplist="+strings.Join(properties, ","),
-	)
+	reply, err := ctx.RouterOSClient.Run("/system/health/print")
 	if err != nil {
 		return nil, err
 	}
@@ -75,10 +74,13 @@ func (c *healthCollector) collectForStat(re *proto.Sentence, ctx *context.Contex
 func (c *healthCollector) collectMetricForProperty(property string, re *proto.Sentence, ctx *context.Context) {
 	value := re.Map[property]
 	if len(value) == 0 {
-		return
+		var ok bool
+		if value, ok = re.Map["value"]; !ok {
+			return
+		}
 	}
 
-	v, err := strconv.ParseFloat(re.Map[property], 64)
+	v, err := strconv.ParseFloat(value, 64)
 	if err != nil {
 		log.WithFields(log.Fields{
 			"collector": c.Name(),

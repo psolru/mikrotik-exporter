@@ -93,7 +93,7 @@ func Test_dhcpLeaseCollector_Collect(t *testing.T) {
 						[]string{"name", "address", "active_mac_address", "server", "status", "active_address", "hostname"},
 					),
 					prometheus.GaugeValue, 100, "device", "address", "active-mac-address", "server",
-					"bound", "192.168.1.1", "host-name",
+					"bound", "192.168.1.1", `"host-name"`,
 				),
 			},
 		},
