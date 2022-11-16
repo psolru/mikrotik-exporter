@@ -2,7 +2,7 @@ package config
 
 import (
 	"bytes"
-	"io/ioutil"
+	"os"
 	"testing"
 	"time"
 
@@ -73,7 +73,7 @@ func TestShouldParse(t *testing.T) {
 }
 
 func loadTestFile(r *require.Assertions) []byte {
-	b, err := ioutil.ReadFile("../testdata/config.test.yml")
+	b, err := os.ReadFile("../testdata/config.test.yml")
 	r.NoError(err)
 
 	return b

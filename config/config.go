@@ -3,10 +3,9 @@ package config
 import (
 	"fmt"
 	"io"
-	"io/ioutil"
 	"time"
 
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 )
 
 type (
@@ -113,7 +112,7 @@ type (
 
 // Load - reads bytes from io.Reader and parses as YAML into Config
 func Load(r io.Reader) (*Config, error) {
-	b, err := ioutil.ReadAll(r)
+	b, err := io.ReadAll(r)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read bytes from reader: %w", err)
 	}

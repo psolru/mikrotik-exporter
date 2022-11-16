@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"errors"
 	"flag"
-	"io/ioutil"
 	"net"
 	"net/http"
 	"os"
@@ -109,7 +108,7 @@ func loadConfig() (*config.Config, error) {
 }
 
 func loadConfigFromFile() (*config.Config, error) {
-	b, err := ioutil.ReadFile(*configFile)
+	b, err := os.ReadFile(*configFile)
 	if err != nil {
 		return nil, err
 	}
@@ -162,7 +161,12 @@ func mustStartServer(cfg *config.Config) {
 
 	log.Infof("Listening on: %s", *port)
 
-	if err := http.ListenAndServe(":"+*port, nil); err != nil && err != http.ErrServerClosed {
+	srv := http.Server{
+		Addr:         ":" + *port,
+		ReadTimeout:  10 * time.Second,
+		WriteTimeout: 10 * time.Second,
+	}
+	if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		log.Fatalf("failed to start server: %v", err)
 	}
 }
