@@ -36,3 +36,4 @@ features:
   netwatch: true
   conntrack: true
   bridge_hosts: true
+  wireguard_peers: true

@@ -42,6 +42,7 @@ Currently the exporter supports collecting these groups of metrics:
 - netwatch
 - conntrack
 - bridge hosts
+- wireguard peers
 
 #### Mikrotik Config
 
@@ -94,6 +95,7 @@ devices:
       wlan: true
       wlan_stations: true
       bridge_hosts: true
+      wireguard: true
   - name: my_second_router
     address: 10.10.0.2
     port: 8999

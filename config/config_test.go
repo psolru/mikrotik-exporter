@@ -61,6 +61,7 @@ func TestShouldParse(t *testing.T) {
 		r.True(cfg.Features.Netwatch)
 		r.True(cfg.Features.Conntrack)
 		r.True(cfg.Features.BridgeHosts)
+		r.True(cfg.Features.WireguardPeers)
 	})
 
 	t.Run("invalid yaml", func(t *testing.T) {

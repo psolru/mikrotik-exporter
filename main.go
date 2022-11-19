@@ -35,6 +35,7 @@ import (
 	"github.com/ogi4i/mikrotik-exporter/collector/poe"
 	"github.com/ogi4i/mikrotik-exporter/collector/resource"
 	"github.com/ogi4i/mikrotik-exporter/collector/routes"
+	"github.com/ogi4i/mikrotik-exporter/collector/wireguard_peers"
 	"github.com/ogi4i/mikrotik-exporter/collector/wireless/stations"
 	"github.com/ogi4i/mikrotik-exporter/collector/wireless/w60g"
 	"github.com/ogi4i/mikrotik-exporter/config"
@@ -276,6 +277,10 @@ func buildCollectors(features *config.Features) []collector.FeatureCollector {
 
 	if features.BridgeHosts {
 		collectors = append(collectors, bridge_hosts.NewCollector())
+	}
+
+	if features.WireguardPeers {
+		collectors = append(collectors, wireguard_peers.NewCollector())
 	}
 
 	return collectors

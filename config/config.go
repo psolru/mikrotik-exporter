@@ -61,6 +61,8 @@ type (
 		Conntrack bool `yaml:"conntrack,omitempty"`
 		// BridgeHosts - enables bridge hosts metrics collection
 		BridgeHosts bool `yaml:"bridge_hosts,omitempty"`
+		// WireguardPeers - enables wireguard peers metrics collection
+		WireguardPeers bool `yaml:"wireguard_peers,omitempty"`
 	}
 
 	// Device - represents a target device configuration
