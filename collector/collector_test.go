@@ -9,10 +9,10 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 
-	"github.com/ogi4i/mikrotik-exporter/collector/context"
-	"github.com/ogi4i/mikrotik-exporter/collector/mocks"
-	"github.com/ogi4i/mikrotik-exporter/routeros"
-	routerosMocks "github.com/ogi4i/mikrotik-exporter/routeros/mocks"
+	"github.com/psolru/mikrotik-exporter/collector/context"
+	"github.com/psolru/mikrotik-exporter/collector/mocks"
+	"github.com/psolru/mikrotik-exporter/routeros"
+	routerosMocks "github.com/psolru/mikrotik-exporter/routeros/mocks"
 )
 
 func TestNewMikrotikCollector(t *testing.T) {

@@ -6,7 +6,7 @@ import (
 
 	"gopkg.in/routeros.v2"
 
-	ros "github.com/ogi4i/mikrotik-exporter/routeros"
+	ros "github.com/psolru/mikrotik-exporter/routeros"
 )
 
 func createClient(device *Device) (ros.Client, error) {

@@ -1,4 +1,4 @@
-module github.com/ogi4i/mikrotik-exporter
+module github.com/psolru/mikrotik-exporter
 
 go 1.19
 

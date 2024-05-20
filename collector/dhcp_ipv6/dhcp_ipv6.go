@@ -8,8 +8,8 @@ import (
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/sync/errgroup"
 
-	"github.com/ogi4i/mikrotik-exporter/collector/context"
-	"github.com/ogi4i/mikrotik-exporter/metrics"
+	"github.com/psolru/mikrotik-exporter/collector/context"
+	"github.com/psolru/mikrotik-exporter/metrics"
 )
 
 var metricDescription = metrics.BuildMetricDescription(prefix, "binding_count", "number of active bindings per dhcp ipv6 server",

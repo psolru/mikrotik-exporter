@@ -5,7 +5,7 @@ set -x
 
 TAG=$(git describe --abbrev=0 --tags)
 REPO_NAME="mikrotik-exporter"
-IMAGE="ogi4i/$REPO_NAME"
+IMAGE="psolru/$REPO_NAME"
 PLATFORM="linux/amd64,linux/arm64,linux/arm"
 
 docker login -u "$DOCKER_USERNAME" -p "$DOCKER_PASSWORD"

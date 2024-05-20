@@ -1,1 +1,1 @@
-* das oGi4i <das.ogi4i@gmail.com> @oGi4i
+* das psolru <das.psolru@gmail.com> @psolru

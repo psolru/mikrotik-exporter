@@ -8,7 +8,7 @@ import (
 	mm_time "time"
 
 	"github.com/gojuno/minimock/v3"
-	"github.com/ogi4i/mikrotik-exporter/collector/context"
+	"github.com/psolru/mikrotik-exporter/collector/context"
 	"github.com/prometheus/client_golang/prometheus"
 )
 

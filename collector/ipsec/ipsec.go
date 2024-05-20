@@ -10,9 +10,9 @@ import (
 	"golang.org/x/sync/errgroup"
 	"gopkg.in/routeros.v2/proto"
 
-	"github.com/ogi4i/mikrotik-exporter/collector/context"
-	"github.com/ogi4i/mikrotik-exporter/metrics"
-	"github.com/ogi4i/mikrotik-exporter/parsers"
+	"github.com/psolru/mikrotik-exporter/collector/context"
+	"github.com/psolru/mikrotik-exporter/metrics"
+	"github.com/psolru/mikrotik-exporter/parsers"
 )
 
 var (

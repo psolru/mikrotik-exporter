@@ -52,8 +52,8 @@ build: clean
 .PHONY: mocks
 mocks: bin-deps
 	$(info Generating mocks...)
-	$(MINIMOCK_BIN) -g -i github.com/ogi4i/mikrotik-exporter/collector.* -o ./collector/mocks -s _mock.go
-	$(MINIMOCK_BIN) -g -i github.com/ogi4i/mikrotik-exporter/routeros.* -o ./routeros/mocks -s _mock.go
+	$(MINIMOCK_BIN) -g -i github.com/psolru/mikrotik-exporter/collector.* -o ./collector/mocks -s _mock.go
+	$(MINIMOCK_BIN) -g -i github.com/psolru/mikrotik-exporter/routeros.* -o ./routeros/mocks -s _mock.go
 
 .PHONY: test
 test:

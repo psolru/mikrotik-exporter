@@ -1,7 +1,7 @@
-[![CI](https://github.com/ogi4i/mikrotik-exporter/actions/workflows/ci.yml/badge.svg)](https://github.com/ogi4i/mikrotik-exporter/actions/workflows/ci.yml)
-[![Docker Publish](https://github.com/ogi4i/mikrotik-exporter/actions/workflows/publish.yml/badge.svg)](https://github.com/ogi4i/mikrotik-exporter/actions/workflows/publish.yml)
-[![Go Report](https://goreportcard.com/badge/github.com/ogi4i/mikrotik-exporter)](https://goreportcard.com/report/github.com/ogi4i/mikrotik-exporter)
-[![Docker Pulls](https://img.shields.io/docker/pulls/ogi4i/mikrotik-exporter.svg)](https://hub.docker.com/r/ogi4i/mikrotik-exporter/)
+[![CI](https://github.com/psolru/mikrotik-exporter/actions/workflows/ci.yml/badge.svg)](https://github.com/psolru/mikrotik-exporter/actions/workflows/ci.yml)
+[![Docker Publish](https://github.com/psolru/mikrotik-exporter/actions/workflows/publish.yml/badge.svg)](https://github.com/psolru/mikrotik-exporter/actions/workflows/publish.yml)
+[![Go Report](https://goreportcard.com/badge/github.com/psolru/mikrotik-exporter)](https://goreportcard.com/report/github.com/psolru/mikrotik-exporter)
+[![Docker Pulls](https://img.shields.io/docker/pulls/psolru/mikrotik-exporter.svg)](https://hub.docker.com/r/psolru/mikrotik-exporter/)
 
 ## prometheus-mikrotik
 

@@ -9,9 +9,9 @@ import (
 	"gopkg.in/routeros.v2"
 	"gopkg.in/routeros.v2/proto"
 
-	"github.com/ogi4i/mikrotik-exporter/collector/context"
-	"github.com/ogi4i/mikrotik-exporter/metrics"
-	"github.com/ogi4i/mikrotik-exporter/routeros/mocks"
+	"github.com/psolru/mikrotik-exporter/collector/context"
+	"github.com/psolru/mikrotik-exporter/metrics"
+	"github.com/psolru/mikrotik-exporter/routeros/mocks"
 )
 
 func Test_firmwareCollector_Name(t *testing.T) {

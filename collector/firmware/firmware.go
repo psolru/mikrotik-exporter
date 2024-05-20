@@ -5,8 +5,8 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 
-	"github.com/ogi4i/mikrotik-exporter/collector/context"
-	"github.com/ogi4i/mikrotik-exporter/metrics"
+	"github.com/psolru/mikrotik-exporter/collector/context"
+	"github.com/psolru/mikrotik-exporter/metrics"
 )
 
 var metricDescription = metrics.BuildMetricDescription(prefix, "package_active", "active firmware packages",

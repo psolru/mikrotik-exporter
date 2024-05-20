@@ -3,7 +3,7 @@ package context
 import (
 	"github.com/prometheus/client_golang/prometheus"
 
-	"github.com/ogi4i/mikrotik-exporter/routeros"
+	"github.com/psolru/mikrotik-exporter/routeros"
 )
 
 // Context - represents context, which is passed to feature collectors

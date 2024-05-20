@@ -25,7 +25,7 @@
         "containers": [
           {
             "name": "mikrotik-exporter",
-            "image": "ogi4i/mikrotik-exporter:latest",
+            "image": "psolru/mikrotik-exporter:latest",
             "env": [
               {
                 "name": "DEVICE",

@@ -33,7 +33,7 @@ linters-settings:
     min-len: 2
     min-occurrences: 2
   goimports:
-    local-prefixes: github.com/ogi4i/mikrotik-exporter
+    local-prefixes: github.com/psolru/mikrotik-exporter
   errchek:
     check-type-assertions: false
   nakedret:

@@ -8,9 +8,9 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/ogi4i/mikrotik-exporter/collector/context"
-	"github.com/ogi4i/mikrotik-exporter/dns"
-	"github.com/ogi4i/mikrotik-exporter/routeros"
+	"github.com/psolru/mikrotik-exporter/collector/context"
+	"github.com/psolru/mikrotik-exporter/dns"
+	"github.com/psolru/mikrotik-exporter/routeros"
 )
 
 var (
